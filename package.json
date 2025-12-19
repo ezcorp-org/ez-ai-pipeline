@@ -1,0 +1,57 @@
+{
+  "name": "ez-ai-pipeline",
+  "version": "1.0.0",
+  "description": "A production-ready CLI tool that executes prompt optimization pipelines using the OpenCode SDK",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": false,
+  "bin": {
+    "ez-ai-pipeline": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --hot run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "test": "bun test",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write src"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "chalk": "^5.4.1",
+    "ora": "^8.1.1",
+    "cli-progress": "^3.12.0",
+    "boxen": "^8.0.1",
+    "figures": "^6.1.0",
+    "yargs": "^17.7.2",
+    "zod": "^3.24.1",
+    "cli-table3": "^0.6.5"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^22.10.2",
+    "@types/yargs": "^17.0.33",
+    "@types/cli-progress": "^3.11.6",
+    "typescript": "^5.7.2",
+    "prettier": "^3.4.2",
+    "eslint": "^9.17.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2"
+  },
+  "keywords": [
+    "ai",
+    "pipeline",
+    "prompt",
+    "optimization",
+    "cli",
+    "anthropic",
+    "claude"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}
