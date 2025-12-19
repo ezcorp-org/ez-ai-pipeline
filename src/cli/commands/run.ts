@@ -1,6 +1,6 @@
 import type { ArgumentsCamelCase } from "yargs";
-import * as readline from "readline";
 import * as path from "path";
+import { select, input } from "@inquirer/prompts";
 import { PipelineExecutor } from "@core/executor.ts";
 import { TerminalUI } from "@cli/ui/terminal.ts";
 import { loadPipeline, savePipelineResult, saveOptimizedPrompt, readInputFile } from "@utils/file.ts";
@@ -43,86 +43,50 @@ async function discoverPipelines(): Promise<PipelineInfo[]> {
 }
 
 async function selectPipeline(pipelines: PipelineInfo[]): Promise<string> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  console.log(chalk.cyan.bold("\n🔧 Select a pipeline to run:\n"));
-
-  pipelines.forEach((p, i) => {
-    console.log(chalk.white(`  ${chalk.cyan.bold(`[${i + 1}]`)} ${p.name}`));
-    if (p.description) {
-      console.log(chalk.dim(`      ${p.description}`));
-    }
-  });
-
   console.log();
 
-  return new Promise((resolve) => {
-    const askSelection = () => {
-      rl.question(chalk.green(`Select pipeline (1-${pipelines.length}): `), (answer) => {
-        const num = parseInt(answer, 10);
-        if (num >= 1 && num <= pipelines.length) {
-          rl.close();
-          const selected = pipelines[num - 1]!;
-          console.log(chalk.dim(`\n   Selected: ${selected.name}\n`));
-          resolve(selected.path);
-        } else {
-          console.log(chalk.yellow(`   Please enter a number between 1 and ${pipelines.length}`));
-          askSelection();
-        }
-      });
-    };
-
-    rl.on("close", () => {
-      // Handle Ctrl+C
-    });
-
-    askSelection();
+  const selected = await select({
+    message: chalk.cyan.bold("Select a pipeline to run"),
+    choices: pipelines.map((p) => ({
+      name: p.name,
+      value: p.path,
+      description: p.description,
+    })),
+    theme: {
+      prefix: "🔧",
+      style: {
+        highlight: (text: string) => chalk.cyan.bold(text),
+        description: (text: string) => chalk.dim(text),
+      },
+    },
   });
+
+  console.log(chalk.dim(`\n   Selected: ${pipelines.find(p => p.path === selected)?.name}\n`));
+  return selected;
 }
 
 async function promptForInput(): Promise<string> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
+  console.log();
 
-  console.log(chalk.cyan.bold("📝 Enter your prompt to optimize"));
-  console.log(chalk.dim("   (Enter an empty line to finish, or Ctrl+C to cancel)\n"));
-
-  return new Promise((resolve) => {
-    const lines: string[] = [];
-    let isFirstLine = true;
-
-    const prompt = () => {
-      rl.question(isFirstLine ? chalk.green("→ ") : chalk.dim("  "), (line) => {
-        isFirstLine = false;
-
-        if (line === "" && lines.length > 0) {
-          rl.close();
-          const input = lines.join("\n").trim();
-          console.log(chalk.dim(`\n   (${input.length} characters entered)\n`));
-          resolve(input);
-        } else if (line !== "") {
-          lines.push(line);
-          prompt();
-        } else {
-          prompt();
-        }
-      });
-    };
-
-    rl.on("close", () => {
-      if (lines.length === 0) {
-        console.log(chalk.yellow("\n⚠️  No input provided, exiting."));
-        process.exit(0);
+  const userInput = await input({
+    message: chalk.cyan.bold("Enter your prompt to optimize"),
+    theme: {
+      prefix: "📝",
+      style: {
+        answer: (text: string) => chalk.white(text),
+      },
+    },
+    validate: (text) => {
+      if (!text || text.trim().length === 0) {
+        return "Please enter a prompt";
       }
-    });
-
-    prompt();
+      return true;
+    },
   });
+
+  const trimmed = userInput.trim();
+  console.log(chalk.dim(`   (${trimmed.length} characters entered)\n`));
+  return trimmed;
 }
 
 export interface RunOptions {
