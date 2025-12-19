@@ -49,7 +49,7 @@ const createMockConfig = (): PipelineConfig => ({
     {
       id: "stage-3",
       name: "Stage 3",
-      type: "final",
+      type: "validate",
       model: {
         providerID: "anthropic",
         modelID: "claude-sonnet-4-5-20250929",
@@ -132,16 +132,16 @@ describe("PipelineContext", () => {
 
   describe("currentStage", () => {
     it("should return the first stage initially", () => {
-      expect(context.currentStage.id).toBe("stage-1");
-      expect(context.currentStage.name).toBe("Stage 1");
+      expect(context.currentStage?.id).toBe("stage-1");
+      expect(context.currentStage?.name).toBe("Stage 1");
     });
 
     it("should return the correct stage after advancing", () => {
       context.advanceStage();
-      expect(context.currentStage.id).toBe("stage-2");
+      expect(context.currentStage?.id).toBe("stage-2");
 
       context.advanceStage();
-      expect(context.currentStage.id).toBe("stage-3");
+      expect(context.currentStage?.id).toBe("stage-3");
     });
   });
 

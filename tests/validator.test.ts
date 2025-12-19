@@ -149,7 +149,7 @@ describe("validateStageReferences", () => {
 
   it("should fail for invalid previousStage variable reference", () => {
     const config = createValidConfig();
-    config.stages[0].prompt.variables = [
+    config.stages[0]!.prompt.variables = [
       {
         name: "invalid",
         source: "previousStage",
@@ -163,7 +163,7 @@ describe("validateStageReferences", () => {
     expect(result.valid).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
     expect(result.data).toBeUndefined();
-    expect(result.errors[0].message).toContain("non-existent-stage");
+    expect(result.errors[0]!.message).toContain("non-existent-stage");
   });
 
   it("should pass for valid skipIf condition reference", () => {
@@ -196,7 +196,7 @@ describe("validateStageReferences", () => {
 
   it("should fail for invalid skipIf condition reference", () => {
     const config = createValidConfig();
-    config.stages[0].conditions = {
+    config.stages[0]!.conditions = {
       skipIf: {
         condition: { path: "status", equals: "complete" },
         sourceStage: "non-existent-stage",
@@ -207,7 +207,7 @@ describe("validateStageReferences", () => {
 
     expect(result.valid).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
-    expect(result.errors[0].message).toContain("non-existent-stage");
+    expect(result.errors[0]!.message).toContain("non-existent-stage");
   });
 
   it("should pass for valid runIf condition reference", () => {
@@ -240,7 +240,7 @@ describe("validateStageReferences", () => {
 
   it("should fail for invalid runIf condition reference", () => {
     const config = createValidConfig();
-    config.stages[0].conditions = {
+    config.stages[0]!.conditions = {
       runIf: {
         condition: { path: "needsWork", equals: true },
         sourceStage: "non-existent-stage",
@@ -251,7 +251,7 @@ describe("validateStageReferences", () => {
 
     expect(result.valid).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
-    expect(result.errors[0].message).toContain("non-existent-stage");
+    expect(result.errors[0]!.message).toContain("non-existent-stage");
   });
 
   it("should pass for valid earlyExit condition reference", () => {
@@ -284,7 +284,7 @@ describe("validateStageReferences", () => {
 
   it("should fail for invalid earlyExit condition reference", () => {
     const config = createValidConfig();
-    config.stages[0].conditions = {
+    config.stages[0]!.conditions = {
       earlyExit: {
         condition: { path: "complete", equals: true },
         returnStage: "non-existent-stage",
@@ -295,12 +295,12 @@ describe("validateStageReferences", () => {
 
     expect(result.valid).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
-    expect(result.errors[0].message).toContain("non-existent-stage");
+    expect(result.errors[0]!.message).toContain("non-existent-stage");
   });
 
   it("should detect multiple invalid references", () => {
     const config = createValidConfig();
-    config.stages[0].prompt.variables = [
+    config.stages[0]!.prompt.variables = [
       {
         name: "var1",
         source: "previousStage",
@@ -308,7 +308,7 @@ describe("validateStageReferences", () => {
         required: true,
       },
     ];
-    config.stages[0].conditions = {
+    config.stages[0]!.conditions = {
       skipIf: {
         condition: { path: "status", equals: "complete" },
         sourceStage: "invalid-2",
@@ -350,7 +350,7 @@ describe("validateFull", () => {
 
   it("should throw ValidationError for invalid stage references", () => {
     const config = createValidConfig();
-    config.stages[0].prompt.variables = [
+    config.stages[0]!.prompt.variables = [
       {
         name: "invalid",
         source: "previousStage",
@@ -379,7 +379,7 @@ describe("validateFull", () => {
 
   it("should throw ValidationError with message for reference errors", () => {
     const config = createValidConfig();
-    config.stages[0].conditions = {
+    config.stages[0]!.conditions = {
       skipIf: {
         condition: { path: "status", equals: "complete" },
         sourceStage: "invalid-stage",

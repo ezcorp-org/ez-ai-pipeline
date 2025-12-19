@@ -57,15 +57,15 @@ describe("ValidationError", () => {
         code: "invalid_type" as const,
         path: ["field1"],
         message: "Invalid type",
-        expected: "string",
-        received: "number",
+        expected: "string" as const,
+        received: "number" as const,
       },
       {
         code: "invalid_type" as const,
         path: ["field2"],
         message: "Required field missing",
-        expected: "string",
-        received: "undefined",
+        expected: "string" as const,
+        received: "undefined" as const,
       },
     ];
 
@@ -83,8 +83,8 @@ describe("ValidationError", () => {
         code: "invalid_type" as const,
         path: ["stages", "stage-1", "model"],
         message: "Invalid model configuration",
-        expected: "object",
-        received: "undefined",
+        expected: "object" as const,
+        received: "undefined" as const,
       },
       {
         code: "custom" as const,

@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { query } from "@anthropic-ai/claude-agent-sdk";
 import type { ModelConfig } from "@typings/stage.ts";
 import { ModelError, TimeoutError, isRetryableError } from "@utils/errors.ts";
 import { calculateCost } from "@utils/cost.ts";
@@ -20,12 +20,10 @@ export interface SessionOptions {
 }
 
 export class SessionManager {
-  private client: Anthropic;
   private conversationHistory: Array<{ role: "user" | "assistant"; content: string }> = [];
+  private sessionId: string | undefined;
 
-  constructor(private readonly options: SessionOptions = {}) {
-    this.client = new Anthropic();
-  }
+  constructor(private readonly options: SessionOptions = {}) {}
 
   async prompt(
     model: ModelConfig,
@@ -75,37 +73,70 @@ export class SessionManager {
     userMessage: string,
     systemPrompt?: string
   ): Promise<PromptResult> {
+    // Build the full prompt with system context
+    const fullPrompt = systemPrompt
+      ? `${systemPrompt}\n\n${userMessage}`
+      : userMessage;
+
     // Add user message to history
     this.conversationHistory.push({ role: "user", content: userMessage });
 
-    const response = await this.client.messages.create({
-      model: model.modelID,
-      max_tokens: model.maxTokens || 4096,
-      temperature: model.temperature,
-      system: systemPrompt,
-      messages: this.conversationHistory,
-    });
+    let responseText = "";
+    let inputTokens = 0;
+    let outputTokens = 0;
 
-    // Extract text from response
-    const text = response.content
-      .filter((block): block is Anthropic.TextBlock => block.type === "text")
-      .map((block) => block.text)
-      .join("\n");
+    // Use Claude Agent SDK query function
+    for await (const message of query({
+      prompt: fullPrompt,
+      options: {
+        model: model.modelID,
+        maxTurns: 1,
+        allowedTools: [], // No tools needed for prompt optimization
+        ...(this.sessionId && { resume: this.sessionId }),
+      },
+    })) {
+      // Capture session ID for potential resume
+      if (message.type === "system" && message.subtype === "init") {
+        this.sessionId = message.session_id;
+      }
+
+      // Capture the result - check subtype for success
+      if (message.type === "result" && message.subtype === "success") {
+        responseText = message.result || "";
+        inputTokens = message.usage?.input_tokens || 0;
+        outputTokens = message.usage?.output_tokens || 0;
+      }
+
+      // Handle assistant messages
+      if (message.type === "assistant" && message.message) {
+        const content = message.message.content;
+        if (Array.isArray(content)) {
+          for (const block of content) {
+            if (block.type === "text") {
+              responseText = block.text;
+            }
+          }
+        }
+        // Extract usage from message if available
+        if (message.message.usage) {
+          inputTokens = message.message.usage.input_tokens || inputTokens;
+          outputTokens = message.message.usage.output_tokens || outputTokens;
+        }
+      }
+    }
 
     // Add assistant response to history
-    this.conversationHistory.push({ role: "assistant", content: text });
+    this.conversationHistory.push({ role: "assistant", content: responseText });
 
-    const inputTokens = response.usage.input_tokens;
-    const outputTokens = response.usage.output_tokens;
     const cost = calculateCost(model.modelID, inputTokens, outputTokens);
 
     return {
-      text,
+      text: responseText,
       inputTokens,
       outputTokens,
       cost,
       model: model.modelID,
-      stopReason: response.stop_reason || "end_turn",
+      stopReason: "end_turn",
     };
   }
 
@@ -123,6 +154,7 @@ export class SessionManager {
 
   clearHistory(): void {
     this.conversationHistory = [];
+    this.sessionId = undefined;
   }
 
   getHistory(): Array<{ role: "user" | "assistant"; content: string }> {
