@@ -1,8 +1,51 @@
 import type { ArgumentsCamelCase } from "yargs";
+import * as readline from "readline";
 import { PipelineExecutor } from "@core/executor.ts";
 import { TerminalUI } from "@cli/ui/terminal.ts";
 import { loadPipeline, savePipelineResult, saveOptimizedPrompt, readInputFile } from "@utils/file.ts";
-import { ConfigurationError } from "@utils/errors.ts";
+import chalk from "chalk";
+
+async function promptForInput(): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  console.log(chalk.cyan.bold("\n📝 Enter your prompt to optimize"));
+  console.log(chalk.dim("   (Enter an empty line to finish, or Ctrl+C to cancel)\n"));
+
+  return new Promise((resolve) => {
+    const lines: string[] = [];
+    let isFirstLine = true;
+
+    const prompt = () => {
+      rl.question(isFirstLine ? chalk.green("→ ") : chalk.dim("  "), (line) => {
+        isFirstLine = false;
+
+        if (line === "" && lines.length > 0) {
+          rl.close();
+          const input = lines.join("\n").trim();
+          console.log(chalk.dim(`\n   (${input.length} characters entered)\n`));
+          resolve(input);
+        } else if (line !== "") {
+          lines.push(line);
+          prompt();
+        } else {
+          prompt();
+        }
+      });
+    };
+
+    rl.on("close", () => {
+      if (lines.length === 0) {
+        console.log(chalk.yellow("\n⚠️  No input provided, exiting."));
+        process.exit(0);
+      }
+    });
+
+    prompt();
+  });
+}
 
 export interface RunOptions {
   pipeline: string;
@@ -29,7 +72,8 @@ export async function runCommand(args: ArgumentsCamelCase<RunOptions>): Promise<
     } else if (args.input) {
       inputPrompt = args.input;
     } else {
-      throw new ConfigurationError("Either --input or --input-file is required");
+      // Interactive mode - prompt for input
+      inputPrompt = await promptForInput();
     }
 
     // Load pipeline
@@ -104,7 +148,7 @@ export const runCommandConfig = {
     input: {
       alias: "i",
       type: "string" as const,
-      describe: "Input prompt text",
+      describe: "Input prompt text (interactive prompt if not provided)",
     },
     "input-file": {
       alias: "f",
