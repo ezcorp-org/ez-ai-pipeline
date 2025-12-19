@@ -37,7 +37,7 @@ const config: PipelineConfig = {
         temperature: 0.1,
       },
       prompt: {
-        systemPrompt: `You are an expert prompt analyst. Your job is to analyze prompts and identify what elements are present or missing.`,
+        systemPrompt: `You are an expert prompt analyst. Your job is to analyze prompts and identify what elements are present or missing. IMPORTANT: You must respond with ONLY a valid JSON object, no additional text or explanation.`,
         template: `Analyze the following prompt for these 5 key elements:
 
 1. TASK: Is there a clear action/request? (YES/PARTIAL/NO)
@@ -51,7 +51,7 @@ Prompt to analyze:
 {{input_prompt}}
 """
 
-Respond with a JSON object:
+Respond with ONLY this JSON object (no other text):
 {
   "task": { "status": "YES|PARTIAL|NO", "details": "what was found or missing" },
   "context": { "status": "YES|PARTIAL|NO", "details": "what was found or missing" },
@@ -104,7 +104,7 @@ Respond with a JSON object:
         temperature: 0.3,
       },
       prompt: {
-        systemPrompt: `You are an expert prompt engineer. Your task is to restructure prompts into a clear, organized format while preserving the original intent.`,
+        systemPrompt: `You are an expert prompt engineer. Your task is to restructure prompts into a clear, organized format while preserving the original intent. IMPORTANT: You must respond with ONLY a valid JSON object, no additional text or explanation.`,
         template: `Based on the analysis, restructure this prompt with clear sections.
 
 Original prompt:
@@ -118,7 +118,7 @@ Analysis results:
 - Context status: {{stage-1-analyze.context}}
 
 Create a structured version with labeled sections. Use XML-style tags for clarity.
-Return as JSON:
+Return ONLY this JSON object (no other text):
 {
   "structuredPrompt": "the restructured prompt with tags",
   "sectionsAdded": ["list of sections added"],
@@ -185,7 +185,7 @@ Return as JSON:
         temperature: 0.5,
       },
       prompt: {
-        systemPrompt: `You are an expert at enhancing prompts with relevant context. Add helpful background information without changing the core request.`,
+        systemPrompt: `You are an expert at enhancing prompts with relevant context. Add helpful background information without changing the core request. IMPORTANT: You must respond with ONLY a valid JSON object, no additional text or explanation.`,
         template: `Enhance this structured prompt with additional context and clarity.
 
 Structured prompt:
@@ -203,7 +203,7 @@ Add:
 2. Clearer instructions
 3. Helpful constraints or guidelines
 
-Return as JSON:
+Return ONLY this JSON object (no other text):
 {
   "enhancedPrompt": "the enhanced prompt",
   "contextAdded": "description of context added",
@@ -250,7 +250,7 @@ Return as JSON:
         temperature: 0.1,
       },
       prompt: {
-        systemPrompt: `You are a quality assurance expert. Validate that enhanced prompts maintain the original intent while being improved.`,
+        systemPrompt: `You are a quality assurance expert. Validate that enhanced prompts maintain the original intent while being improved. IMPORTANT: You must respond with ONLY a valid JSON object, no additional text or explanation.`,
         template: `Validate that the enhanced prompt maintains the original intent.
 
 Original prompt:
@@ -269,14 +269,14 @@ Check:
 3. Is the prompt clear and unambiguous?
 4. Are there any issues or concerns?
 
-Return as JSON:
+Return ONLY this JSON object (no other text):
 {
-  "intentPreserved": true/false,
-  "additionsRelevant": true/false,
-  "isClarity": true/false,
-  "issues": ["any issues found"],
-  "overallValid": true/false,
-  "suggestions": ["any suggestions for improvement"]
+  "intentPreserved": true,
+  "additionsRelevant": true,
+  "isClarity": true,
+  "issues": [],
+  "overallValid": true,
+  "suggestions": []
 }`,
         variables: [
           {
@@ -320,7 +320,7 @@ Return as JSON:
         temperature: 0.4,
       },
       prompt: {
-        systemPrompt: `You are an expert prompt engineer making final refinements. Apply suggested improvements while maintaining quality.`,
+        systemPrompt: `You are an expert prompt engineer making final refinements. Apply suggested improvements while maintaining quality. IMPORTANT: You must respond with ONLY a valid JSON object, no additional text or explanation.`,
         template: `Apply final improvements to the prompt based on validation feedback.
 
 Current enhanced prompt:
@@ -332,7 +332,7 @@ Validation issues: {{stage-4-validate.issues}}
 Suggestions: {{stage-4-validate.suggestions}}
 
 Apply the improvements and return the refined prompt.
-Return as JSON:
+Return ONLY this JSON object (no other text):
 {
   "refinedPrompt": "the refined prompt",
   "changesApplied": ["list of changes applied"],
@@ -393,7 +393,7 @@ Return as JSON:
         temperature: 0.2,
       },
       prompt: {
-        systemPrompt: `You are a prompt engineer creating the final deliverable. Format the optimized prompt for production use.`,
+        systemPrompt: `You are a prompt engineer creating the final deliverable. Format the optimized prompt for production use. IMPORTANT: You must respond with ONLY a valid JSON object, no additional text or explanation.`,
         template: `Create the final optimized prompt ready for use.
 
 Best available prompt:
@@ -411,11 +411,11 @@ Format the final prompt with:
 2. All necessary context and instructions
 3. Proper formatting for readability
 
-Return as JSON:
+Return ONLY this JSON object (no other text):
 {
   "optimizedPrompt": "the final optimized prompt",
   "summary": "brief summary of optimizations made",
-  "improvementScore": 1-10,
+  "improvementScore": 8,
   "usageNotes": "any notes for using this prompt"
 }`,
         variables: [
