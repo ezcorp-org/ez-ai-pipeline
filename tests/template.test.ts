@@ -240,4 +240,280 @@ describe("buildPromptFromConfig", () => {
       buildPromptFromConfig("{{required_var}}", variables, context);
     }).toThrow();
   });
+
+  it("should stringify object values in template", () => {
+    const context: TemplateContext = {
+      input: { prompt: "test" },
+      stages: new Map(),
+      context: {},
+    };
+
+    const variables = [
+      {
+        name: "data",
+        source: "static" as const,
+        value: { key: "value", nested: { data: 123 } },
+        required: true,
+      },
+    ];
+
+    const result = buildPromptFromConfig("Data: {{data}}", variables, context);
+
+    expect(result).toContain('"key": "value"');
+    expect(result).toContain('"nested"');
+  });
+
+  it("should handle undefined optional variables as empty string", () => {
+    const context: TemplateContext = {
+      input: { prompt: "test" },
+      stages: new Map(),
+      context: {},
+    };
+
+    const variables = [
+      {
+        name: "optional",
+        source: "input" as const,
+        path: "missing",
+        required: false,
+      },
+    ];
+
+    const result = buildPromptFromConfig("Value: {{optional}}", variables, context);
+
+    expect(result).toBe("Value: ");
+  });
+
+  it("should throw for undefined variables in template not in variables list", () => {
+    const context: TemplateContext = {
+      input: {},
+      stages: new Map(),
+      context: {},
+    };
+
+    const variables: any[] = [];
+
+    expect(() => {
+      buildPromptFromConfig("{{missing_var}}", variables, context);
+    }).toThrow();
+  });
+
+  it("should resolve variables from context fallback", () => {
+    const context: TemplateContext = {
+      input: {},
+      stages: new Map(),
+      context: { fallbackValue: "from context" },
+    };
+
+    const result = buildPromptFromConfig("{{fallbackValue}}", [], context);
+
+    expect(result).toBe("from context");
+  });
+});
+
+describe("resolveVariable edge cases", () => {
+  it("should throw for previousStage without required stageId", () => {
+    const context: TemplateContext = {
+      input: {},
+      stages: new Map(),
+      context: {},
+    };
+
+    const variable = {
+      name: "prev",
+      source: "previousStage" as const,
+      required: true,
+    };
+
+    expect(() => resolveVariable(variable, context)).toThrow("requires stageId");
+  });
+
+  it("should return undefined for non-required missing stage", () => {
+    const context: TemplateContext = {
+      input: {},
+      stages: new Map(),
+      context: {},
+    };
+
+    const variable = {
+      name: "prev",
+      source: "previousStage" as const,
+      stageId: "missing-stage",
+      required: false,
+    };
+
+    const result = resolveVariable(variable, context);
+    expect(result).toBeUndefined();
+  });
+
+  it("should throw for required missing stage", () => {
+    const context: TemplateContext = {
+      input: {},
+      stages: new Map(),
+      context: {},
+    };
+
+    const variable = {
+      name: "prev",
+      source: "previousStage" as const,
+      stageId: "missing-stage",
+      required: true,
+    };
+
+    expect(() => resolveVariable(variable, context)).toThrow("not found");
+  });
+
+  it("should resolve previousStage with path", () => {
+    const stageResult: StageResult = {
+      stageId: "stage-1",
+      stageName: "Test",
+      status: "completed",
+      duration: 100,
+      model: "test",
+      cost: 0.01,
+      inputTokens: 100,
+      outputTokens: 50,
+      output: "raw",
+      parsedOutput: { data: { nested: { value: "deep value" } } },
+    };
+
+    const context: TemplateContext = {
+      input: {},
+      stages: new Map([["stage-1", stageResult]]),
+      context: {},
+    };
+
+    const variable = {
+      name: "prev",
+      source: "previousStage" as const,
+      stageId: "stage-1",
+      path: "data.nested.value",
+      required: true,
+    };
+
+    const result = resolveVariable(variable, context);
+    expect(result).toBe("deep value");
+  });
+
+  it("should throw for unknown variable source", () => {
+    const context: TemplateContext = {
+      input: {},
+      stages: new Map(),
+      context: {},
+    };
+
+    const variable = {
+      name: "test",
+      source: "unknown" as any,
+      required: true,
+    };
+
+    expect(() => resolveVariable(variable, context)).toThrow("Unknown variable source");
+  });
+
+  it("should resolve input variable without path using name", () => {
+    const context: TemplateContext = {
+      input: { prompt: "test prompt" },
+      stages: new Map(),
+      context: {},
+    };
+
+    const variable = {
+      name: "prompt",
+      source: "input" as const,
+      required: true,
+    };
+
+    const result = resolveVariable(variable, context);
+    expect(result).toBe("test prompt");
+  });
+
+  it("should resolve context variable without path using name", () => {
+    const context: TemplateContext = {
+      input: {},
+      stages: new Map(),
+      context: { userId: "123" },
+    };
+
+    const variable = {
+      name: "userId",
+      source: "context" as const,
+      required: true,
+    };
+
+    const result = resolveVariable(variable, context);
+    expect(result).toBe("123");
+  });
+});
+
+describe("interpolateVariables edge cases", () => {
+  it("should handle template with no variables", () => {
+    const context: TemplateContext = {
+      input: {},
+      stages: new Map(),
+      context: {},
+    };
+
+    const result = interpolateVariables("No variables here", context);
+    expect(result).toBe("No variables here");
+  });
+
+  it("should handle input.prompt notation", () => {
+    const context: TemplateContext = {
+      input: { prompt: "test prompt" },
+      stages: new Map(),
+      context: {},
+    };
+
+    const result = interpolateVariables("{{input.prompt}}", context);
+    expect(result).toBe("test prompt");
+  });
+
+  it("should handle whitespace in variable paths", () => {
+    const context: TemplateContext = {
+      input: { prompt: "test" },
+      stages: new Map(),
+      context: {},
+    };
+
+    const result = interpolateVariables("{{  input_prompt  }}", context);
+    expect(result).toBe("test");
+  });
+
+  it("should resolve stage output from dot notation", () => {
+    const stageResult: StageResult = {
+      stageId: "stage-1",
+      stageName: "Test",
+      status: "completed",
+      duration: 100,
+      model: "test",
+      cost: 0.01,
+      inputTokens: 100,
+      outputTokens: 50,
+      output: { text: "raw output text" },
+      parsedOutput: { result: "parsed result" },
+    };
+
+    const context: TemplateContext = {
+      input: {},
+      stages: new Map([["stage-1", stageResult]]),
+      context: {},
+    };
+
+    const result = interpolateVariables("{{stage-1.result}}", context);
+    expect(result).toBe("parsed result");
+  });
+
+  it("should handle deeply nested paths with intermediate non-objects", () => {
+    const context: TemplateContext = {
+      input: { data: { value: "string", nested: "not an object" } },
+      stages: new Map(),
+      context: {},
+    };
+
+    // Try to access nested.deep.value where nested is a string
+    expect(() => {
+      interpolateVariables("{{data.nested.deep}}", context);
+    }).toThrow();
+  });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { calculateCost, formatCost, getModelTier } from "../src/utils/cost.ts";
+import { calculateCost, formatCost, getModelTier, estimateTotalCost } from "../src/utils/cost.ts";
 
 describe("calculateCost", () => {
   it("should calculate cost for Claude Haiku", () => {
@@ -74,5 +74,52 @@ describe("getModelTier", () => {
     expect(getModelTier("claude-sonnet-4-5-20250929")).toBe("medium");
     expect(getModelTier("gpt-4o")).toBe("medium");
     expect(getModelTier("unknown-model")).toBe("medium");
+  });
+
+  it("should be case insensitive", () => {
+    expect(getModelTier("CLAUDE-OPUS-4-5-20250929")).toBe("large");
+    expect(getModelTier("GPT-4O-MINI")).toBe("small");
+    expect(getModelTier("GEMINI-1.5-PRO")).toBe("large");
+  });
+
+  it("should identify gpt-4- models as large", () => {
+    expect(getModelTier("gpt-4-0613")).toBe("large");
+    expect(getModelTier("gpt-4-0314")).toBe("large");
+  });
+});
+
+describe("estimateTotalCost", () => {
+  it("should calculate total cost for multiple stages", () => {
+    const stages = [
+      {
+        modelId: "claude-haiku-4-5-20251001",
+        estimatedInputTokens: 1000,
+        estimatedOutputTokens: 500,
+      },
+      {
+        modelId: "claude-sonnet-4-5-20250929",
+        estimatedInputTokens: 2000,
+        estimatedOutputTokens: 1000,
+      },
+      {
+        modelId: "gpt-4o",
+        estimatedInputTokens: 1500,
+        estimatedOutputTokens: 750,
+      },
+    ];
+
+    const totalCost = estimateTotalCost(stages);
+
+    // Calculate expected:
+    // Haiku: (1000/1M * 0.8) + (500/1M * 4.0) = 0.0008 + 0.002 = 0.0028
+    // Sonnet: (2000/1M * 3.0) + (1000/1M * 15.0) = 0.006 + 0.015 = 0.021
+    // GPT-4o: (1500/1M * 2.5) + (750/1M * 10.0) = 0.00375 + 0.0075 = 0.01125
+    // Total: 0.0028 + 0.021 + 0.01125 = 0.03505
+    expect(totalCost).toBeCloseTo(0.03505, 5);
+  });
+
+  it("should return zero for empty stages array", () => {
+    const totalCost = estimateTotalCost([]);
+    expect(totalCost).toBe(0);
   });
 });
