@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 32" fill="none">
+  <!-- EZ AI Pipeline - Primary Logo with Text -->
+
+  <!-- EZ Icon (node-based letters) -->
+  <g id="ez-icon" transform="translate(0, 4)">
+    <!-- E letter -->
+    <line x1="4" y1="4" x2="4" y2="20" stroke="#F4C430" stroke-width="2" stroke-linecap="round"/>
+    <line x1="4" y1="4" x2="14" y2="4" stroke="#F4C430" stroke-width="2" stroke-linecap="round"/>
+    <line x1="4" y1="12" x2="11" y2="12" stroke="#F4C430" stroke-width="2" stroke-linecap="round"/>
+    <line x1="4" y1="20" x2="14" y2="20" stroke="#F4C430" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="4" cy="4" r="2.5" fill="#F4C430"/>
+    <circle cx="14" cy="4" r="2.5" fill="#F4C430"/>
+    <circle cx="4" cy="12" r="2.5" fill="#F4C430"/>
+    <circle cx="11" cy="12" r="2.5" fill="#F4C430"/>
+    <circle cx="4" cy="20" r="2.5" fill="#F4C430"/>
+    <circle cx="14" cy="20" r="2.5" fill="#F4C430"/>
+
+    <!-- Z letter -->
+    <line x1="20" y1="4" x2="32" y2="4" stroke="#F4C430" stroke-width="2" stroke-linecap="round"/>
+    <line x1="32" y1="4" x2="20" y2="20" stroke="#F4C430" stroke-width="2" stroke-linecap="round"/>
+    <line x1="20" y1="20" x2="32" y2="20" stroke="#F4C430" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="20" cy="4" r="2.5" fill="#F4C430"/>
+    <circle cx="32" cy="4" r="2.5" fill="#F4C430"/>
+    <circle cx="20" cy="20" r="2.5" fill="#F4C430"/>
+    <circle cx="32" cy="20" r="2.5" fill="#F4C430"/>
+  </g>
+
+  <!-- Text: AI Pipeline -->
+  <text x="44" y="22" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="16" font-weight="600" fill="currentColor" letter-spacing="-0.02em">
+    AI Pipeline
+  </text>
+</svg>

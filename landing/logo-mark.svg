@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- EZ AI Pipeline - App Icon / Logo Mark -->
+
+  <!-- Background -->
+  <rect width="64" height="64" rx="14" fill="#0A0A0A"/>
+
+  <!-- E letter -->
+  <g id="E">
+    <line x1="12" y1="16" x2="12" y2="48" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <line x1="12" y1="16" x2="26" y2="16" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <line x1="12" y1="32" x2="22" y2="32" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <line x1="12" y1="48" x2="26" y2="48" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="12" cy="16" r="4" fill="#F4C430"/>
+    <circle cx="26" cy="16" r="4" fill="#F4C430"/>
+    <circle cx="12" cy="32" r="4" fill="#F4C430"/>
+    <circle cx="22" cy="32" r="4" fill="#F4C430"/>
+    <circle cx="12" cy="48" r="4" fill="#F4C430"/>
+    <circle cx="26" cy="48" r="4" fill="#F4C430"/>
+  </g>
+
+  <!-- Z letter -->
+  <g id="Z">
+    <line x1="36" y1="16" x2="52" y2="16" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <line x1="52" y1="16" x2="36" y2="48" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <line x1="36" y1="48" x2="52" y2="48" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="36" cy="16" r="4" fill="#F4C430"/>
+    <circle cx="52" cy="16" r="4" fill="#F4C430"/>
+    <circle cx="36" cy="48" r="4" fill="#F4C430"/>
+    <circle cx="52" cy="48" r="4" fill="#F4C430"/>
+  </g>
+</svg>

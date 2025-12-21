@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- EZ AI Pipeline - "EZ" spelled with connected nodes -->
+
+  <!-- E letter - nodes at corners and intersections -->
+  <g id="letter-E">
+    <!-- Lines first (behind nodes) -->
+    <!-- Vertical spine -->
+    <line x1="10" y1="14" x2="10" y2="50" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <!-- Top bar -->
+    <line x1="10" y1="14" x2="26" y2="14" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <!-- Middle bar -->
+    <line x1="10" y1="32" x2="22" y2="32" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <!-- Bottom bar -->
+    <line x1="10" y1="50" x2="26" y2="50" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Nodes at intersections -->
+    <circle cx="10" cy="14" r="4" fill="#F4C430"/>
+    <circle cx="26" cy="14" r="4" fill="#F4C430"/>
+    <circle cx="10" cy="32" r="4" fill="#F4C430"/>
+    <circle cx="22" cy="32" r="4" fill="#F4C430"/>
+    <circle cx="10" cy="50" r="4" fill="#F4C430"/>
+    <circle cx="26" cy="50" r="4" fill="#F4C430"/>
+  </g>
+
+  <!-- Z letter - nodes at corners -->
+  <g id="letter-Z">
+    <!-- Lines first -->
+    <!-- Top bar -->
+    <line x1="34" y1="14" x2="54" y2="14" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <!-- Diagonal -->
+    <line x1="54" y1="14" x2="34" y2="50" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+    <!-- Bottom bar -->
+    <line x1="34" y1="50" x2="54" y2="50" stroke="#F4C430" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Nodes at corners -->
+    <circle cx="34" cy="14" r="4" fill="#F4C430"/>
+    <circle cx="54" cy="14" r="4" fill="#F4C430"/>
+    <circle cx="34" cy="50" r="4" fill="#F4C430"/>
+    <circle cx="54" cy="50" r="4" fill="#F4C430"/>
+  </g>
+</svg>
