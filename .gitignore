@@ -1,38 +1,87 @@
-# dependencies (bun install)
-node_modules
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
 
-# output
-out
-dist
+# Build outputs
+out/
+dist/
+build/
 *.tgz
 
-# code coverage
-coverage
+# Code coverage
+coverage/
 *.lcov
+.nyc_output/
 
-# logs
-logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# dotenv environment variable files
+# Environment variables
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env.*
+!.env.example
 
-# caches
+# Caches
 .eslintcache
-.cache
+.cache/
 *.tsbuildinfo
+.parcel-cache/
+.turbo/
 
-# IntelliJ based IDEs
-.idea
+# Testing
+*.lcov
+.nyc_output/
 
-# Finder (MacOS) folder config
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+
+# OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Debug
+*.pem
+*.key
+
+# Secrets (never commit these)
+*.p12
+*.pfx
+credentials.json
+secrets.json
+service-account*.json
 
 # Pipeline outputs (keep .gitkeep)
 outputs/*
 !outputs/.gitkeep
+
+# Local configuration
+*.local
+.localrc
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
