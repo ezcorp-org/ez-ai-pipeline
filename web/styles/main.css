@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* Custom styles */
+:root {
+  --sidebar-width: 240px;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Stage type colors */
+.stage-analyze { --stage-color: #3b82f6; }
+.stage-structure { --stage-color: #8b5cf6; }
+.stage-enhance { --stage-color: #10b981; }
+.stage-validate { --stage-color: #f59e0b; }
+.stage-iterate { --stage-color: #eab308; }
+.stage-test { --stage-color: #06b6d4; }
+.stage-custom { --stage-color: #6b7280; }
+
+/* Status colors */
+.status-success, .status-completed { color: #10b981; }
+.status-skipped { color: #6b7280; }
+.status-failed { color: #ef4444; }
+
+/* JSON viewer */
+.json-key { color: #8b5cf6; }
+.json-string { color: #10b981; }
+.json-number { color: #3b82f6; }
+.json-boolean { color: #f59e0b; }
+.json-null { color: #6b7280; }
+
+/* Code blocks */
+pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
