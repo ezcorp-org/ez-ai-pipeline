@@ -1,5 +1,6 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
+import { executionManager, type WebSocketData } from "./execution.ts";
 
 const PIPELINES_DIR = join(import.meta.dir, "../pipelines");
 const OUTPUTS_DIR = join(import.meta.dir, "../outputs");
@@ -116,18 +117,78 @@ async function serveIndex(): Promise<Response> {
   });
 }
 
-const server = Bun.serve({
+const server = Bun.serve<WebSocketData>({
   port: PORT,
-  async fetch(req) {
+  async fetch(req, server) {
     const url = new URL(req.url);
     const path = url.pathname;
 
+    // WebSocket upgrade for /ws
+    if (path === "/ws") {
+      const upgraded = server.upgrade(req, {
+        data: {
+          subscribedExecutions: new Set<string>(),
+        },
+      });
+      if (upgraded) {
+        return undefined;
+      }
+      return new Response("WebSocket upgrade failed", { status: 400 });
+    }
+
     // API routes
+
+    // Config status - check if API key is present
+    if (path === "/api/config/status") {
+      return Response.json({
+        hasApiKey: !!process.env.ANTHROPIC_API_KEY,
+        // Never expose the actual key
+      });
+    }
+
     if (path === "/api/pipelines") {
       const pipelines = await getPipelines();
       return Response.json(pipelines);
     }
 
+    // POST /api/pipelines/:id/run - Run a pipeline
+    if (req.method === "POST" && path.match(/^\/api\/pipelines\/[^/]+\/run$/)) {
+      const id = path.split("/")[3];
+      const pipeline = await getPipeline(id);
+      if (!pipeline) {
+        return Response.json({ error: "Pipeline not found" }, { status: 404 });
+      }
+
+      try {
+        const body = await req.json();
+        const input = body?.input;
+
+        if (!input || typeof input !== "string" || input.trim() === "") {
+          return Response.json(
+            { error: "Input is required and must be a non-empty string" },
+            { status: 400 }
+          );
+        }
+
+        const executionId = executionManager.generateExecutionId();
+
+        // Start execution asynchronously (don't await)
+        executionManager.start(executionId, pipeline, input.trim());
+
+        return Response.json({
+          executionId,
+          pipelineId: pipeline.pipeline.id,
+          status: "started",
+        });
+      } catch (e) {
+        return Response.json(
+          { error: e instanceof Error ? e.message : "Failed to start execution" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // GET /api/pipelines/:id - Get pipeline details
     if (path.startsWith("/api/pipelines/")) {
       const id = path.replace("/api/pipelines/", "");
       const pipeline = await getPipeline(id);
@@ -135,6 +196,35 @@ const server = Bun.serve({
         return Response.json({ error: "Pipeline not found" }, { status: 404 });
       }
       return Response.json(pipeline);
+    }
+
+    // POST /api/executions/:id/cancel - Cancel a running execution
+    if (req.method === "POST" && path.match(/^\/api\/executions\/[^/]+\/cancel$/)) {
+      const executionId = path.split("/")[3];
+      const cancelled = executionManager.cancel(executionId);
+      return Response.json({ cancelled });
+    }
+
+    // GET /api/executions/:id - Get execution status
+    if (path.match(/^\/api\/executions\/[^/]+$/)) {
+      const executionId = path.split("/")[3];
+      const execution = executionManager.getExecution(executionId);
+      if (!execution) {
+        return Response.json({ error: "Execution not found" }, { status: 404 });
+      }
+      return Response.json({
+        id: execution.id,
+        pipelineId: execution.pipelineId,
+        status: execution.status,
+        startTime: execution.startTime,
+        result: execution.result ? {
+          status: execution.result.status,
+          pipelineId: execution.result.pipelineId,
+          summary: execution.result.summary,
+          output: execution.result.output,
+          error: execution.result.error,
+        } : undefined,
+      });
     }
 
     if (path === "/api/outputs") {
@@ -165,6 +255,42 @@ const server = Bun.serve({
 
     // SPA fallback - serve index.html for all other routes
     return serveIndex();
+  },
+  websocket: {
+    open(ws) {
+      // Connection opened, data is already initialized with subscribedExecutions
+    },
+    message(ws, message) {
+      try {
+        const data = JSON.parse(message.toString());
+
+        if (data.type === "subscribe" && data.executionId) {
+          const success = executionManager.subscribe(data.executionId, ws);
+          ws.send(JSON.stringify({
+            type: "subscribed",
+            executionId: data.executionId,
+            success,
+          }));
+        }
+
+        if (data.type === "unsubscribe" && data.executionId) {
+          executionManager.unsubscribe(data.executionId, ws);
+          ws.send(JSON.stringify({
+            type: "unsubscribed",
+            executionId: data.executionId,
+          }));
+        }
+      } catch (e) {
+        ws.send(JSON.stringify({
+          type: "error",
+          message: "Invalid message format",
+        }));
+      }
+    },
+    close(ws) {
+      // Clean up all subscriptions when client disconnects
+      executionManager.unsubscribeAll(ws);
+    },
   },
 });
 

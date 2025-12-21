@@ -1,4 +1,6 @@
 <script lang="ts">
+  import ExecutionForm from '../execution/ExecutionForm.svelte';
+
   let { id, navigate }: { id: string; navigate: (path: string) => void } = $props();
 
   interface Stage {
@@ -143,6 +145,8 @@
         {/if}
       </div>
     </div>
+
+    <ExecutionForm pipelineId={pipeline.pipeline.id} pipelineName={pipeline.pipeline.name} stageCount={pipeline.stages.length} />
 
     <div class="space-y-4">
       <h2 class="font-semibold text-slate-700 mb-4">Pipeline Stages</h2>

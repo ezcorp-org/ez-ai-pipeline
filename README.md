@@ -91,11 +91,27 @@ ez-ai-pipeline web              # Start on default port 3000
 ez-ai-pipeline web -p 8080      # Start on custom port
 ```
 
-Opens a local web interface to browse your pipeline outputs. Features:
-- View all pipeline execution results
-- Explore stage-by-stage details
-- See costs and token usage
-- Browse output files
+Opens a local web interface to browse pipelines and execute them directly in your browser.
+
+**Features:**
+- **Run Pipelines**: Execute any pipeline with real-time progress tracking
+- **Live Progress**: Watch stages complete with WebSocket-powered updates
+- **Cost Tracking**: See costs accumulate as each stage finishes
+- **View Outputs**: Browse all pipeline execution results
+- **Stage Details**: Explore stage-by-stage outputs and configurations
+
+**Running Pipelines from the Web:**
+
+1. Start the web dashboard: `ez-ai-pipeline web`
+2. Navigate to a pipeline from the sidebar
+3. Enter your prompt in the textarea
+4. Click "Run Pipeline" or press `Ctrl+Enter`
+5. Watch real-time progress as each stage executes
+6. View the final optimized output
+
+**Keyboard Shortcuts:**
+- `Ctrl+Enter` - Run the pipeline
+- `Escape` - Cancel a running execution
 
 ## Included Pipelines
 
@@ -233,6 +249,59 @@ Results are saved to the `outputs/` directory:
 
 - `result-{pipeline}-{timestamp}.json` - Full pipeline results
 - `prompt-{pipeline}-{timestamp}.md` - Optimized prompt (for prompt pipelines)
+
+## Web API
+
+The web dashboard exposes a REST API and WebSocket endpoint for programmatic access:
+
+### REST Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/pipelines` | List all available pipelines |
+| GET | `/api/pipelines/:id` | Get pipeline configuration |
+| POST | `/api/pipelines/:id/run` | Start pipeline execution |
+| GET | `/api/executions/:id` | Get execution status |
+| POST | `/api/executions/:id/cancel` | Cancel running execution |
+| GET | `/api/outputs` | List all execution outputs |
+| GET | `/api/outputs/:filename` | Get specific output file |
+| GET | `/api/config/status` | Check if API key is configured |
+
+### Running a Pipeline via API
+
+```bash
+# Start execution
+curl -X POST http://localhost:3000/api/pipelines/prompt-optimizer/run \
+  -H "Content-Type: application/json" \
+  -d '{"input": "Your prompt to optimize"}'
+
+# Response: { "executionId": "exec_123...", "pipelineId": "prompt-optimizer", "status": "started" }
+
+# Check status
+curl http://localhost:3000/api/executions/exec_123...
+
+# Cancel execution
+curl -X POST http://localhost:3000/api/executions/exec_123.../cancel
+```
+
+### WebSocket for Real-Time Updates
+
+Connect to `ws://localhost:3000/ws` for real-time execution progress:
+
+```javascript
+const ws = new WebSocket('ws://localhost:3000/ws');
+
+// Subscribe to an execution
+ws.send(JSON.stringify({ type: 'subscribe', executionId: 'exec_123...' }));
+
+// Receive events
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  // Event types: stage:started, stage:completed, stage:failed,
+  //              stage:skipped, execution:completed, execution:cancelled
+  console.log(data);
+};
+```
 
 ## Development
 
