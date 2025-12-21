@@ -1,17 +1,38 @@
 {
-  "name": "ez-ai-pipeline",
-  "version": "1.0.0",
+  "name": "@ez-corp/ez-ai-pipeline",
+  "version": "1.3.0",
   "description": "A production-ready CLI tool that executes prompt optimization pipelines using the OpenCode SDK",
-  "module": "src/index.ts",
   "type": "module",
-  "private": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "bin": {
-    "ez-ai-pipeline": "./src/index.ts"
+    "ez-ai-pipeline": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "dist-pipelines",
+    "web-dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
   },
   "scripts": {
     "start": "bun run src/index.ts",
     "dev": "bun --hot run src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build": "bun build src/index.ts --outdir dist --target node --minify",
+    "build:pipelines": "bun run scripts/build-pipelines.ts",
+    "build:web": "bun run web/build.ts && rm -rf web-dist && cp -r web/dist web-dist",
+    "build:all": "bun run build && bun run build:pipelines && bun run build:web",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
+    "prepublishOnly": "bun run build:all",
     "test": "bun test",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
@@ -23,6 +44,7 @@
     "@anthropic-ai/claude-agent-sdk": "^0.1.73",
     "@anthropic-ai/sdk": "^0.39.0",
     "@inquirer/prompts": "^8.1.0",
+    "tinyglobby": "^0.2.0",
     "boxen": "^8.0.1",
     "chalk": "^5.4.1",
     "cli-progress": "^3.12.0",

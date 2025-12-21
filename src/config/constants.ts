@@ -1,5 +1,5 @@
 export const APP_NAME = "EZ Ai Pipeline";
-export const APP_VERSION = "1.0.0";
+export const APP_VERSION = "1.3.0";
 export const APP_DESCRIPTION = "Prompt Optimization with Cost-Efficient Model Selection";
 
 export const DEFAULT_TIMEOUT_MS = 60000;

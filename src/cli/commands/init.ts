@@ -1,5 +1,6 @@
 import type { ArgumentsCamelCase } from "yargs";
 import chalk from "chalk";
+import { fileExists, writeFile } from "@utils/file.ts";
 
 export interface InitOptions {
   name: string;
@@ -145,15 +146,14 @@ export async function initCommand(args: ArgumentsCamelCase<InitOptions>): Promis
 
   try {
     // Check if file already exists
-    const file = Bun.file(filePath);
-    if (await file.exists()) {
+    if (await fileExists(filePath)) {
       console.log(chalk.red(`Error: Pipeline '${name}' already exists at ${filePath}`));
       process.exit(1);
     }
 
     // Create the file
     const content = PIPELINE_TEMPLATE.replace(/\{\{name\}\}/g, name);
-    await Bun.write(filePath, content);
+    await writeFile(filePath, content);
 
     console.log(chalk.green(`✅ Created new pipeline: ${filePath}`));
     console.log();

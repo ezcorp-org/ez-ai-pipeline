@@ -165,7 +165,7 @@ export class TerminalUI {
   }
 
   showPipelineList(
-    pipelines: { id: string; name: string; version: string; description?: string; stages: number }[]
+    pipelines: { id: string; name: string; version: string; description?: string; stages: number; source?: "local" | "package" }[]
   ): void {
     if (this.options.json) {
       console.log(JSON.stringify(pipelines, null, 2));
@@ -173,7 +173,8 @@ export class TerminalUI {
     }
 
     if (pipelines.length === 0) {
-      console.log(chalk.yellow("No pipelines found in ./pipelines directory"));
+      console.log(chalk.yellow("No pipelines found"));
+      console.log(chalk.dim("Checked: ./pipelines and package built-in pipelines"));
       console.log(chalk.dim("Run"), chalk.cyan("ez-ai-pipeline init <name>"), chalk.dim("to create one."));
       return;
     }
@@ -183,17 +184,20 @@ export class TerminalUI {
         chalk.cyan("Pipeline"),
         chalk.cyan("Version"),
         chalk.cyan("Stages"),
+        chalk.cyan("Source"),
         chalk.cyan("Description"),
       ],
       style: { head: [], border: ["dim"] },
     });
 
     for (const pipeline of pipelines) {
+      const sourceLabel = pipeline.source === "package" ? chalk.dim("built-in") : chalk.green("local");
       table.push([
         pipeline.id,
         pipeline.version,
         String(pipeline.stages),
-        (pipeline.description || "").slice(0, 40) + (pipeline.description && pipeline.description.length > 40 ? "..." : ""),
+        sourceLabel,
+        (pipeline.description || "").slice(0, 35) + (pipeline.description && pipeline.description.length > 35 ? "..." : ""),
       ]);
     }
 

@@ -1,0 +1,49 @@
+# Source files (we ship compiled dist)
+src/
+web/
+landing/
+pipelines/
+outputs/
+
+# Development files
+*.ts
+!*.d.ts
+tsconfig.json
+.eslintrc*
+.prettierrc*
+.editorconfig
+
+# Tests
+tests/
+*.test.ts
+*.spec.ts
+__tests__/
+coverage/
+
+# Build tools
+bun.lockb
+.env*
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation (keep README)
+docs/
+*.md
+!README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log
+node_modules/

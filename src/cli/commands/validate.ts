@@ -1,4 +1,5 @@
 import type { ArgumentsCamelCase } from "yargs";
+import * as path from "node:path";
 import { TerminalUI } from "@cli/ui/terminal.ts";
 import { validatePipelineConfig, validateStageReferences } from "@schema/validator.ts";
 
@@ -20,7 +21,8 @@ export async function validateCommand(args: ArgumentsCamelCase<ValidateOptions>)
     }
 
     // Load and parse the module
-    const module = await import(Bun.resolveSync(filePath, process.cwd()));
+    const resolvedPath = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
+    const module = await import(resolvedPath);
     const config = module.default || module;
 
     // Validate schema

@@ -1,6 +1,9 @@
 # EZ AI Pipeline
 
-A production-ready CLI tool for executing prompt optimization pipelines using AI models. Features a beautiful terminal interface, multi-stage pipeline execution, and cost-efficient model selection.
+[![npm version](https://img.shields.io/npm/v/@ez-corp/ez-ai-pipeline.svg)](https://www.npmjs.com/package/@ez-corp/ez-ai-pipeline)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A production-ready CLI tool for executing prompt optimization pipelines using AI models. Features a beautiful terminal interface, multi-stage pipeline execution, cost-efficient model selection, and a built-in web dashboard.
 
 ## Features
 
@@ -11,19 +14,17 @@ A production-ready CLI tool for executing prompt optimization pipelines using AI
 - **Variable Interpolation**: Pass data between stages using template variables
 - **Multiple Output Formats**: JSON, Markdown, and text parsing support
 - **Pause/Resume/Cancel**: Control pipeline execution in real-time
+- **Web Dashboard**: Built-in web viewer to browse pipeline outputs
+- **Included Pipelines**: Ships with ready-to-use pipelines (prompt-optimizer, pipeline-generator)
 
 ## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-repo/ez-ai-pipeline.git
-cd ez-ai-pipeline
+# Install globally from npm
+npm install -g @ez-corp/ez-ai-pipeline
 
-# Install dependencies
-bun install
-
-# Run the CLI
-bun run src/index.ts --help
+# Or use with npx
+npx @ez-corp/ez-ai-pipeline --help
 ```
 
 ## Quick Start
@@ -34,22 +35,22 @@ bun run src/index.ts --help
 export ANTHROPIC_API_KEY="your-api-key"
 ```
 
-### 2. List available pipelines
+### 2. Run an included pipeline
 
 ```bash
-bun run src/index.ts list
+ez-ai-pipeline run -p prompt-optimizer -i "Write a blog post about productivity"
 ```
 
-### 3. Run a pipeline
+### 3. View results in the web dashboard
 
 ```bash
-bun run src/index.ts run --pipeline prompt-optimizer --input "Write a blog post about productivity"
+ez-ai-pipeline web
 ```
 
 ### 4. Create your own pipeline
 
 ```bash
-bun run src/index.ts init my-pipeline
+ez-ai-pipeline init my-pipeline
 ```
 
 ## Commands
@@ -81,6 +82,37 @@ ez-ai-pipeline validate --pipeline <id>
 
 ```bash
 ez-ai-pipeline init <name>
+```
+
+### `web` - Start the web dashboard
+
+```bash
+ez-ai-pipeline web              # Start on default port 3000
+ez-ai-pipeline web -p 8080      # Start on custom port
+```
+
+Opens a local web interface to browse your pipeline outputs. Features:
+- View all pipeline execution results
+- Explore stage-by-stage details
+- See costs and token usage
+- Browse output files
+
+## Included Pipelines
+
+The package ships with ready-to-use pipelines:
+
+### `prompt-optimizer`
+Optimizes prompts for better AI responses. Analyzes input, identifies improvements, and generates an enhanced version.
+
+```bash
+ez-ai-pipeline run -p prompt-optimizer -i "Your prompt to optimize"
+```
+
+### `pipeline-generator`
+Generates new pipeline configurations from natural language descriptions.
+
+```bash
+ez-ai-pipeline run -p pipeline-generator -i "Create a pipeline that summarizes articles"
 ```
 
 ## Pipeline Configuration
@@ -222,12 +254,15 @@ ez-ai-pipeline/
 ├── src/
 │   ├── index.ts              # CLI entry point
 │   ├── cli/                  # CLI commands and UI
+│   │   └── commands/         # Command implementations (run, list, validate, init, web)
 │   ├── core/                 # Pipeline execution engine
 │   ├── schema/               # Zod schemas and validation
 │   ├── typings/              # TypeScript type definitions
 │   ├── utils/                # Utilities (cost, templates, etc.)
 │   └── config/               # Configuration and constants
-├── pipelines/                # User pipeline definitions
+├── pipelines/                # Included pipeline definitions
+├── web/                      # Web dashboard source
+├── web-dist/                 # Built web assets (included in npm package)
 ├── outputs/                  # Generated outputs
 ├── tests/                    # Test files
 └── package.json

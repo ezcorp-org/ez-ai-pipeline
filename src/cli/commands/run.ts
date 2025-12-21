@@ -1,43 +1,72 @@
 import type { ArgumentsCamelCase } from "yargs";
-import * as path from "path";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { select, input } from "@inquirer/prompts";
+import { glob } from "tinyglobby";
 import { PipelineExecutor } from "@core/executor.ts";
 import { TerminalUI } from "@cli/ui/terminal.ts";
 import { loadPipeline, savePipelineResult, saveOptimizedPrompt, readInputFile } from "@utils/file.ts";
 import chalk from "chalk";
-import { Glob } from "bun";
 
 interface PipelineInfo {
   path: string;
   name: string;
   description?: string;
+  source: "local" | "package";
+}
+
+// Get the package root directory (where compiled pipelines are installed)
+function getPackagePipelinesDir(): string {
+  // Use import.meta.url which gives the actual file location at runtime
+  const currentDir = path.dirname(fileURLToPath(import.meta.url));
+  // After bundling, code is in dist/, so go up one level to package root, then into dist-pipelines
+  // (dist-pipelines contains compiled .js versions of the pipelines)
+  return path.resolve(currentDir, "../dist-pipelines");
+}
+
+// Get local pipelines directory (in current working directory)
+function getLocalPipelinesDir(): string {
+  return path.resolve(process.cwd(), "pipelines");
 }
 
 async function discoverPipelines(): Promise<PipelineInfo[]> {
   const pipelines: PipelineInfo[] = [];
-  const pipelinesDir = path.join(process.cwd(), "pipelines");
+  const seenNames = new Set<string>();
 
-  try {
-    const glob = new Glob("**/*.ts");
-    for await (const file of glob.scan(pipelinesDir)) {
-      const fullPath = path.join(pipelinesDir, file);
-      try {
-        const module = await import(fullPath);
-        const config = module.default;
-        if (config?.pipeline?.name) {
-          pipelines.push({
-            path: fullPath,
-            name: config.pipeline.name,
-            description: config.pipeline.description,
-          });
+  // Helper to load pipelines from a directory
+  async function loadFromDir(dir: string, source: "local" | "package") {
+    try {
+      // Local pipelines are .ts files, package pipelines are compiled .js files
+      const pattern = source === "package" ? "**/*.js" : "**/*.ts";
+      const files = await glob(pattern, { cwd: dir });
+      for (const file of files) {
+        const fullPath = path.join(dir, file);
+        try {
+          const module = await import(fullPath);
+          const config = module.default;
+          if (config?.pipeline?.name && !seenNames.has(config.pipeline.name)) {
+            seenNames.add(config.pipeline.name);
+            pipelines.push({
+              path: fullPath,
+              name: config.pipeline.name,
+              description: config.pipeline.description,
+              source,
+            });
+          }
+        } catch {
+          // Skip files that don't export a valid pipeline
         }
-      } catch {
-        // Skip files that don't export a valid pipeline
       }
+    } catch {
+      // Directory might not exist
     }
-  } catch {
-    // Pipelines directory might not exist
   }
+
+  // Check local pipelines first (they take priority)
+  await loadFromDir(getLocalPipelinesDir(), "local");
+
+  // Then check package pipelines
+  await loadFromDir(getPackagePipelinesDir(), "package");
 
   return pipelines;
 }
@@ -48,7 +77,7 @@ async function selectPipeline(pipelines: PipelineInfo[]): Promise<string> {
   const selected = await select({
     message: chalk.cyan.bold("Select a pipeline to run"),
     choices: pipelines.map((p) => ({
-      name: p.name,
+      name: `${p.name} ${p.source === "package" ? chalk.dim("(built-in)") : chalk.green("(local)")}`,
       value: p.path,
       description: p.description,
     })),
@@ -118,7 +147,8 @@ export async function runCommand(args: ArgumentsCamelCase<RunOptions>): Promise<
       // Discover and select pipeline
       const pipelines = await discoverPipelines();
       if (pipelines.length === 0) {
-        console.log(chalk.yellow("\n⚠️  No pipelines found in ./pipelines directory"));
+        console.log(chalk.yellow("\n⚠️  No pipelines found"));
+        console.log(chalk.dim("   Checked: ./pipelines and package built-in pipelines"));
         console.log(chalk.dim("   Create a pipeline file or specify one with -p flag\n"));
         process.exit(1);
       }

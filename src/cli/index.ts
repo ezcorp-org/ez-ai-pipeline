@@ -5,6 +5,7 @@ import { runCommandConfig, runCommand } from "@cli/commands/run.ts";
 import { listCommandConfig } from "@cli/commands/list.ts";
 import { validateCommandConfig } from "@cli/commands/validate.ts";
 import { initCommandConfig } from "@cli/commands/init.ts";
+import { webCommandConfig } from "@cli/commands/web.ts";
 
 export function createCLI() {
   return yargs(hideBin(process.argv))
@@ -15,6 +16,7 @@ export function createCLI() {
     .command(listCommandConfig)
     .command(validateCommandConfig)
     .command(initCommandConfig)
+    .command(webCommandConfig)
     .strict()
     .help("help")
     .alias("h", "help")
@@ -26,6 +28,7 @@ export function createCLI() {
     .example("$0 list", "List all available pipelines")
     .example("$0 validate -p my-pipeline", "Validate a pipeline configuration")
     .example("$0 init my-new-pipeline", "Create a new pipeline from template")
+    .example("$0 web", "Start the Pipeline Viewer web interface")
     .epilogue("For more information, visit https://github.com/your-repo/ez-ai-pipeline");
 }
 
