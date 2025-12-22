@@ -49,13 +49,13 @@
       <div class="flex gap-2">
         <button
           onclick={copyToClipboard}
-          class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors"
+          class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
         >
           Copy
         </button>
         <button
           onclick={() => showFullOutput = !showFullOutput}
-          class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors"
+          class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
         >
           {showFullOutput ? 'Collapse' : 'Expand'}
         </button>

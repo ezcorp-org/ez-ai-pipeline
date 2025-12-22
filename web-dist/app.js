@@ -5008,7 +5008,7 @@ function Sidebar($$anchor, $$props) {
     next();
     template_effect(($0) => {
       set_attribute2(a, "href", get(item).path);
-      set_class(a, 1, `flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${$0 ?? ""}`);
+      set_class(a, 1, `flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors cursor-pointer ${$0 ?? ""}`);
       set_text(text2, get(item).icon);
       set_text(text_1, get(item).label);
     }, [
@@ -5034,7 +5034,7 @@ var root_12 = from_html(`
     </div>
   `, 1);
 var root_3 = from_html(`
-            <button class="w-full p-4 text-left hover:bg-slate-50 transition-colors">
+            <button class="w-full p-4 text-left hover:bg-slate-50 transition-colors cursor-pointer">
               <div class="font-medium text-slate-800"> </div>
               <div class="text-sm text-slate-500"> </div>
             </button>
@@ -5043,7 +5043,7 @@ var root_4 = from_html(`
             <div class="p-4 text-slate-500 text-sm">No pipelines found</div>
           `, 1);
 var root_5 = from_html(`
-            <button class="w-full p-4 text-left hover:bg-slate-50 transition-colors">
+            <button class="w-full p-4 text-left hover:bg-slate-50 transition-colors cursor-pointer">
               <div class="flex items-center justify-between">
                 <div class="font-medium text-slate-800"> </div>
                 <span> </span>
@@ -5078,7 +5078,7 @@ var root_22 = from_html(`
       <div class="bg-white rounded-xl shadow-sm border border-slate-200">
         <div class="p-4 border-b border-slate-200 flex justify-between items-center">
           <h2 class="font-semibold text-slate-700">Pipelines</h2>
-          <button class="text-sm text-blue-600 hover:text-blue-800">
+          <button class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
             View all →
           </button>
         </div>
@@ -5090,7 +5090,7 @@ var root_22 = from_html(`
       <div class="bg-white rounded-xl shadow-sm border border-slate-200">
         <div class="p-4 border-b border-slate-200 flex justify-between items-center">
           <h2 class="font-semibold text-slate-700">Recent Runs</h2>
-          <button class="text-sm text-blue-600 hover:text-blue-800">
+          <button class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
             View all →
           </button>
         </div>
@@ -5301,7 +5301,7 @@ var root_32 = from_html(`
     <div class="bg-red-50 text-red-600 p-4 rounded-lg"> </div>
   `, 1);
 var root_52 = from_html(`
-        <button class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 text-left hover:shadow-md hover:border-slate-300 transition-all">
+        <button class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 text-left hover:shadow-md hover:border-slate-300 transition-all cursor-pointer">
           <div class="flex items-start justify-between mb-3">
             <div class="text-2xl">\uD83D\uDD27</div>
             <span> </span>
@@ -5838,7 +5838,7 @@ function StageStatus($$anchor, $$props) {
   next();
   reset(div);
   template_effect(($0) => {
-    set_class(div, 1, `rounded-lg border ${statusColors[$$props.stage.status] ?? ""} transition-all duration-300 ${$$props.stage.output ? "cursor-pointer hover:shadow-md" : ""}`);
+    set_class(div, 1, `rounded-lg border ${statusColors[$$props.stage.status] ?? ""} transition-all duration-300 ${$$props.stage.output && $$props.onToggle ? "cursor-pointer hover:shadow-md" : ""}`);
     set_class(div_2, 1, `w-8 h-8 rounded-full flex items-center justify-center text-lg shrink-0
       ${$$props.stage.status === "pending" ? "bg-slate-200 text-slate-500" : ""}
       ${$$props.stage.status === "running" ? "bg-blue-200 text-blue-700 animate-pulse" : ""}
@@ -6295,10 +6295,10 @@ var root_19 = from_html(`
     <div class="flex items-center justify-between mb-4">
       <h2 class="font-semibold text-slate-700">Output</h2>
       <div class="flex gap-2">
-        <button class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors">
+        <button class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
           Copy
         </button>
-        <button class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors"> </button>
+        <button class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"> </button>
       </div>
     </div>
 
@@ -6461,7 +6461,7 @@ var root_64 = from_svg(`
                   </svg>
                 `, 1);
 var root_24 = from_html(`
-        <button class="w-full text-left p-3 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors">
+        <button class="w-full text-left p-3 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer">
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
               <div class="font-medium text-slate-800 text-sm truncate"> </div>
@@ -6673,10 +6673,10 @@ var root_65 = from_html(`
           </div>
         `, 1);
 var root_124 = from_html(`
-            <button class="px-4 py-2 text-sm bg-red-100 text-red-600 rounded-lg hover:bg-red-200 disabled:opacity-50 transition-colors"> </button>
+            <button class="px-4 py-2 text-sm bg-red-100 text-red-600 rounded-lg hover:bg-red-200 disabled:opacity-50 transition-colors cursor-pointer"> </button>
           `, 1);
 var root_142 = from_html(`
-            <button class="px-4 py-2 text-sm bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors">
+            <button class="px-4 py-2 text-sm bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors cursor-pointer">
               New Run
             </button>
           `, 1);
@@ -6696,7 +6696,7 @@ var root_172 = from_html(`
           <div>
             <div class="font-medium">Error</div>
             <div class="text-sm mt-1"> </div>
-            <button class="mt-2 text-sm text-red-700 hover:text-red-800 underline">
+            <button class="mt-2 text-sm text-red-700 hover:text-red-800 underline cursor-pointer">
               Retry
             </button>
           </div>
@@ -6745,7 +6745,7 @@ var root_44 = from_html(`
         </div>
         <div class="flex gap-2">
           <!>
-          <button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
+          <button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center gap-2">
             <!>
           </button>
         </div>
@@ -7176,9 +7176,9 @@ function ExecutionForm($$anchor, $$props) {
           next();
           template_effect(($0) => {
             button.disabled = !get(config)?.hasApiKey || get(status) === "running";
-            set_class(button, 1, `px-3 py-1.5 text-sm rounded-lg transition-colors ${get(executionMode) === "api" ? "bg-blue-600 text-white" : "bg-white border border-slate-300 text-slate-600 hover:bg-slate-50"} disabled:opacity-50 disabled:cursor-not-allowed`);
+            set_class(button, 1, `px-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer ${get(executionMode) === "api" ? "bg-blue-600 text-white" : "bg-white border border-slate-300 text-slate-600 hover:bg-slate-50"} disabled:opacity-50 disabled:cursor-not-allowed`);
             button_1.disabled = !get(config)?.cliTools.claude.available && !get(config)?.cliTools.opencode.available && !get(config)?.cliTools.aider.available || get(status) === "running";
-            set_class(button_1, 1, `px-3 py-1.5 text-sm rounded-lg transition-colors ${get(executionMode) === "cli" ? "bg-blue-600 text-white" : "bg-white border border-slate-300 text-slate-600 hover:bg-slate-50"} disabled:opacity-50 disabled:cursor-not-allowed`);
+            set_class(button_1, 1, `px-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer ${get(executionMode) === "cli" ? "bg-blue-600 text-white" : "bg-white border border-slate-300 text-slate-600 hover:bg-slate-50"} disabled:opacity-50 disabled:cursor-not-allowed`);
             textarea.disabled = get(status) === "running";
             set_text(text_5, `${get(input).length ?? ""} characters`);
             button_4.disabled = $0;
@@ -7275,22 +7275,80 @@ var root_83 = from_html(`
 var root_93 = from_html(`
           <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded"> </span>
         `, 1);
+var root_125 = from_html(`
+                <div class="mt-2 text-xs text-red-600 truncate pl-12"> </div>
+              `, 1);
 var root_113 = from_html(`
+            <button class="w-full text-left p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+              <div class="flex items-center gap-4">
+                <!-- Status Icon -->
+                <div>
+                  <span class="text-sm"> </span>
+                </div>
+
+                <!-- Execution Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span> </span>
+                    <span class="text-xs text-slate-500"> </span>
+                  </div>
+                  <p class="text-sm text-slate-600 truncate mt-1"> </p>
+                </div>
+
+                <!-- Stats -->
+                <div class="flex items-center gap-4 shrink-0 text-xs text-slate-500">
+                  <div class="text-right">
+                    <div class="font-medium text-slate-700"> </div>
+                    <div>duration</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="font-medium text-slate-700"> </div>
+                    <div>cost</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="font-medium text-slate-700"> </div>
+                    <div>stages</div>
+                  </div>
+                </div>
+
+                <!-- Arrow -->
+                <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </div>
+
+              <!>
+            </button>
+          `, 1);
+var root_103 = from_html(`
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+          <h2 class="font-semibold text-slate-700">Recent Executions</h2>
+          <button class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
+            View all →
+          </button>
+        </div>
+        <div class="divide-y divide-slate-100">
+          <!>
+        </div>
+      </div>
+    `, 1);
+var root_143 = from_html(`
             <div class="absolute left-6 -top-4 w-0.5 h-4 bg-slate-300"></div>
           `, 1);
-var root_125 = from_html(`
+var root_153 = from_html(`
                 <span class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">Conditional</span>
               `, 1);
-var root_143 = from_html(`
+var root_173 = from_html(`
                   <p class="text-sm text-slate-600 mb-4"> </p>
                 `, 1);
-var root_173 = from_html(`
+var root_202 = from_html(`
                               <span class="text-slate-400"> </span>
                             `, 1);
-var root_182 = from_html(`
+var root_21 = from_html(`
                               <span class="text-slate-400"> </span>
                             `, 1);
-var root_162 = from_html(`
+var root_193 = from_html(`
                         <div class="p-2 text-sm flex items-center gap-2">
                           <code class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-xs"> </code>
                           <span class="text-slate-400">←</span>
@@ -7299,7 +7357,7 @@ var root_162 = from_html(`
                           </span>
                         </div>
                       `, 1);
-var root_153 = from_html(`
+var root_182 = from_html(`
                   <div class="mb-4">
                     <h4 class="text-xs font-semibold text-slate-500 uppercase mb-2">Variables</h4>
                     <div class="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100">
@@ -7307,33 +7365,33 @@ var root_153 = from_html(`
                     </div>
                   </div>
                 `, 1);
-var root_202 = from_html(`<span class="text-green-500">*</span>`);
-var root_193 = from_html(`
+var root_232 = from_html(`<span class="text-green-500">*</span>`);
+var root_222 = from_html(`
                         <span class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200"> <!>
                         </span>
                       `, 1);
-var root_222 = from_html(`
+var root_25 = from_html(`
                         <div class="mb-1">
                           <span class="font-medium text-amber-700">Skip if:</span>
                           <code class="ml-2 text-xs"> </code>
                           <span class="text-slate-500"> </span>
                         </div>
                       `, 1);
-var root_232 = from_html(`
+var root_26 = from_html(`
                         <div class="mb-1">
                           <span class="font-medium text-amber-700">Run if:</span>
                           <code class="ml-2 text-xs"> </code>
                           <span class="text-slate-500"> </span>
                         </div>
                       `, 1);
-var root_242 = from_html(`
+var root_27 = from_html(`
                         <div>
                           <span class="font-medium text-amber-700">Early exit:</span>
                           <code class="ml-2 text-xs"> </code>
                           <span class="text-slate-500"> </span>
                         </div>
                       `, 1);
-var root_21 = from_html(`
+var root_242 = from_html(`
                   <div>
                     <h4 class="text-xs font-semibold text-slate-500 uppercase mb-2">Conditions</h4>
                     <div class="bg-amber-50 rounded-lg p-3 border border-amber-200 text-sm">
@@ -7343,7 +7401,7 @@ var root_21 = from_html(`
                     </div>
                   </div>
                 `, 1);
-var root_133 = from_html(`
+var root_162 = from_html(`
               <div class="border-t border-slate-200 p-4 bg-slate-50">
                 <!>
 
@@ -7385,15 +7443,15 @@ var root_133 = from_html(`
                 <!>
               </div>
             `, 1);
-var root_25 = from_html(`
+var root_28 = from_html(`
             <div class="absolute left-6 -bottom-4 w-0.5 h-4 bg-slate-300"></div>
           `, 1);
-var root_103 = from_html(`
+var root_133 = from_html(`
         <div class="relative">
           <!>
 
           <div>
-            <button class="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors">
+            <button class="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors cursor-pointer">
               <div class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-sm font-medium"></div>
 
               <div class="flex-1">
@@ -7435,6 +7493,9 @@ var root_57 = from_html(`
 
     <!>
 
+    <!-- Recent Executions -->
+    <!>
+
     <div class="space-y-4">
       <h2 class="font-semibold text-slate-700 mb-4">Pipeline Stages</h2>
 
@@ -7444,7 +7505,7 @@ var root_57 = from_html(`
 var root9 = from_html(`
 
 <div>
-  <button class="text-slate-500 hover:text-slate-700 mb-4 flex items-center gap-1">
+  <button class="text-slate-500 hover:text-slate-700 mb-4 flex items-center gap-1 cursor-pointer">
     ← Back to Pipelines
   </button>
 
@@ -7456,6 +7517,7 @@ function PipelineDetail($$anchor, $$props) {
   let loading = state(true);
   let error = state(null);
   let expandedStage = state(null);
+  let recentExecutions = state(proxy([]));
   user_effect(() => {
     set(loading, true);
     fetch(`/api/pipelines/${$$props.id}`).then((r) => {
@@ -7470,6 +7532,66 @@ function PipelineDetail($$anchor, $$props) {
       set(loading, false);
     });
   });
+  user_effect(() => {
+    fetch("/api/executions/history?pageSize=10").then((r) => r.json()).then((data) => {
+      set(recentExecutions, (data.executions || []).filter((exec) => exec.pipelineId === $$props.id).slice(0, 5), true);
+    }).catch(() => {
+      set(recentExecutions, [], true);
+    });
+  });
+  function formatDuration(ms) {
+    if (ms < 1000)
+      return `${ms}ms`;
+    if (ms < 60000)
+      return `${(ms / 1000).toFixed(1)}s`;
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor(ms % 60000 / 1000);
+    return `${minutes}m ${seconds}s`;
+  }
+  function formatCost(cost) {
+    return `$${cost.toFixed(4)}`;
+  }
+  function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    const now2 = new Date;
+    const diffMs = now2.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1)
+      return "just now";
+    if (diffMins < 60)
+      return `${diffMins}m ago`;
+    if (diffHours < 24)
+      return `${diffHours}h ago`;
+    if (diffDays < 7)
+      return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  }
+  function getStatusColor(status) {
+    switch (status) {
+      case "completed":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "failed":
+        return "text-red-600 bg-red-50 border-red-200";
+      case "cancelled":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      default:
+        return "text-slate-600 bg-slate-50 border-slate-200";
+    }
+  }
+  function getStatusIcon(status) {
+    switch (status) {
+      case "completed":
+        return "✓";
+      case "failed":
+        return "✕";
+      case "cancelled":
+        return "⏸";
+      default:
+        return "•";
+    }
+  }
   const stageTypeColors = {
     analyze: "bg-blue-100 text-blue-700 border-blue-300",
     structure: "bg-purple-100 text-purple-700 border-purple-300",
@@ -7535,7 +7657,7 @@ function PipelineDetail($$anchor, $$props) {
           var fragment_4 = comment();
           var node_2 = first_child(fragment_4);
           {
-            var consequent_19 = ($$anchor4) => {
+            var consequent_21 = ($$anchor4) => {
               var fragment_5 = root_57();
               var div_2 = sibling(first_child(fragment_5));
               var div_3 = sibling(child(div_2));
@@ -7625,381 +7747,505 @@ function PipelineDetail($$anchor, $$props) {
                   return get(pipeline).stages.length;
                 }
               });
-              var div_6 = sibling(node_7, 2);
-              var node_8 = sibling(child(div_6), 3);
-              each(node_8, 17, () => get(pipeline).stages, index, ($$anchor5, stage, index2) => {
-                next();
-                var fragment_10 = root_103();
-                var div_7 = sibling(first_child(fragment_10));
-                var node_9 = sibling(child(div_7));
-                {
-                  var consequent_6 = ($$anchor6) => {
+              var node_8 = sibling(node_7, 2);
+              var node_9 = sibling(node_8, 2);
+              {
+                var consequent_7 = ($$anchor5) => {
+                  var fragment_10 = root_103();
+                  var div_6 = sibling(first_child(fragment_10));
+                  var div_7 = sibling(child(div_6));
+                  var button_1 = sibling(child(div_7), 3);
+                  button_1.__click = () => $$props.navigate("/running");
+                  next();
+                  reset(div_7);
+                  var div_8 = sibling(div_7, 2);
+                  var node_10 = sibling(child(div_8));
+                  each(node_10, 17, () => get(recentExecutions), index, ($$anchor6, execution) => {
+                    next();
                     var fragment_11 = root_113();
-                    next(2);
+                    var button_2 = sibling(first_child(fragment_11));
+                    button_2.__click = () => $$props.navigate(`/executions/${get(execution).id}`);
+                    var div_9 = sibling(child(button_2));
+                    var node_11 = sibling(child(div_9));
+                    var div_10 = sibling(node_11, 2);
+                    var span_1 = sibling(child(div_10));
+                    var text_5 = child(span_1, true);
+                    reset(span_1);
+                    next();
+                    reset(div_10);
+                    var node_12 = sibling(div_10, 2);
+                    var div_11 = sibling(node_12, 2);
+                    var div_12 = sibling(child(div_11));
+                    var span_2 = sibling(child(div_12));
+                    var text_6 = child(span_2);
+                    reset(span_2);
+                    var span_3 = sibling(span_2, 2);
+                    var text_7 = child(span_3, true);
+                    reset(span_3);
+                    next();
+                    reset(div_12);
+                    var p_2 = sibling(div_12, 2);
+                    var text_8 = child(p_2);
+                    reset(p_2);
+                    next();
+                    reset(div_11);
+                    var node_13 = sibling(div_11, 2);
+                    var div_13 = sibling(node_13, 2);
+                    var div_14 = sibling(child(div_13));
+                    var div_15 = sibling(child(div_14));
+                    var text_9 = child(div_15, true);
+                    reset(div_15);
+                    next(3);
+                    reset(div_14);
+                    var div_16 = sibling(div_14, 2);
+                    var div_17 = sibling(child(div_16));
+                    var text_10 = child(div_17, true);
+                    reset(div_17);
+                    next(3);
+                    reset(div_16);
+                    var div_18 = sibling(div_16, 2);
+                    var div_19 = sibling(child(div_18));
+                    var text_11 = child(div_19);
+                    reset(div_19);
+                    next(3);
+                    reset(div_18);
+                    next();
+                    reset(div_13);
+                    var node_14 = sibling(div_13, 2);
+                    next(3);
+                    reset(div_9);
+                    var node_15 = sibling(div_9, 2);
+                    {
+                      var consequent_6 = ($$anchor7) => {
+                        var fragment_12 = root_125();
+                        var div_20 = sibling(first_child(fragment_12));
+                        var text_12 = child(div_20);
+                        reset(div_20);
+                        next();
+                        template_effect(() => set_text(text_12, `
+                  Error: ${get(execution).error ?? ""}
+                `));
+                        append($$anchor7, fragment_12);
+                      };
+                      if_block(node_15, ($$render) => {
+                        if (get(execution).error)
+                          $$render(consequent_6);
+                      });
+                    }
+                    next();
+                    reset(button_2);
+                    next();
+                    template_effect(($0, $1, $2, $3, $4, $5) => {
+                      set_class(div_10, 1, `w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${$0 ?? ""}`);
+                      set_text(text_5, $1);
+                      set_class(span_2, 1, `text-xs px-2 py-0.5 rounded-full font-medium ${$2 ?? ""}`);
+                      set_text(text_6, `
+                      ${get(execution).status ?? ""}
+                    `);
+                      set_text(text_7, $3);
+                      set_text(text_8, `
+                    "${get(execution).inputPreview ?? ""}"
+                  `);
+                      set_text(text_9, $4);
+                      set_text(text_10, $5);
+                      set_text(text_11, `${get(execution).stagesRun ?? ""}/${get(execution).totalStages ?? ""}`);
+                    }, [
+                      () => getStatusColor(get(execution).status),
+                      () => getStatusIcon(get(execution).status),
+                      () => getStatusColor(get(execution).status),
+                      () => formatTime(get(execution).startTime),
+                      () => formatDuration(get(execution).duration),
+                      () => formatCost(get(execution).totalCost)
+                    ]);
                     append($$anchor6, fragment_11);
+                  });
+                  next();
+                  reset(div_8);
+                  next();
+                  reset(div_6);
+                  next();
+                  append($$anchor5, fragment_10);
+                };
+                if_block(node_9, ($$render) => {
+                  if (get(recentExecutions).length > 0)
+                    $$render(consequent_7);
+                });
+              }
+              var div_21 = sibling(node_9, 2);
+              var node_16 = sibling(child(div_21), 3);
+              each(node_16, 17, () => get(pipeline).stages, index, ($$anchor5, stage, index2) => {
+                next();
+                var fragment_13 = root_133();
+                var div_22 = sibling(first_child(fragment_13));
+                var node_17 = sibling(child(div_22));
+                {
+                  var consequent_8 = ($$anchor6) => {
+                    var fragment_14 = root_143();
+                    next(2);
+                    append($$anchor6, fragment_14);
                   };
-                  if_block(node_9, ($$render) => {
+                  if_block(node_17, ($$render) => {
                     if (index2 > 0)
-                      $$render(consequent_6);
+                      $$render(consequent_8);
                   });
                 }
-                var div_8 = sibling(node_9, 2);
-                var button_1 = sibling(child(div_8));
-                button_1.__click = () => toggleStage(get(stage).id);
-                var div_9 = sibling(child(button_1));
-                div_9.textContent = `
+                var div_23 = sibling(node_17, 2);
+                var button_3 = sibling(child(div_23));
+                button_3.__click = () => toggleStage(get(stage).id);
+                var div_24 = sibling(child(button_3));
+                div_24.textContent = `
                 ${index2 + 1}
               `;
-                var div_10 = sibling(div_9, 2);
-                var div_11 = sibling(child(div_10));
-                var span_1 = sibling(child(div_11));
-                var text_5 = child(span_1, true);
-                reset(span_1);
-                var span_2 = sibling(span_1, 2);
-                var text_6 = child(span_2);
-                reset(span_2);
+                var div_25 = sibling(div_24, 2);
+                var div_26 = sibling(child(div_25));
+                var span_4 = sibling(child(div_26));
+                var text_13 = child(span_4, true);
+                reset(span_4);
+                var span_5 = sibling(span_4, 2);
+                var text_14 = child(span_5);
+                reset(span_5);
                 next();
-                reset(div_11);
-                var div_12 = sibling(div_11, 2);
-                var text_7 = child(div_12);
-                reset(div_12);
+                reset(div_26);
+                var div_27 = sibling(div_26, 2);
+                var text_15 = child(div_27);
+                reset(div_27);
                 next();
-                reset(div_10);
-                var node_10 = sibling(div_10, 2);
+                reset(div_25);
+                var node_18 = sibling(div_25, 2);
                 {
-                  var consequent_7 = ($$anchor6) => {
-                    var fragment_12 = root_125();
+                  var consequent_9 = ($$anchor6) => {
+                    var fragment_15 = root_153();
                     next(2);
-                    append($$anchor6, fragment_12);
+                    append($$anchor6, fragment_15);
                   };
-                  if_block(node_10, ($$render) => {
+                  if_block(node_18, ($$render) => {
                     if (get(stage).conditions?.skipIf || get(stage).conditions?.runIf || get(stage).conditions?.earlyExit)
-                      $$render(consequent_7);
+                      $$render(consequent_9);
                   });
                 }
-                var span_3 = sibling(node_10, 2);
-                var text_8 = child(span_3, true);
-                reset(span_3);
+                var span_6 = sibling(node_18, 2);
+                var text_16 = child(span_6, true);
+                reset(span_6);
                 next();
-                reset(button_1);
-                var node_11 = sibling(button_1, 2);
+                reset(button_3);
+                var node_19 = sibling(button_3, 2);
                 {
-                  var consequent_17 = ($$anchor6) => {
-                    var fragment_13 = root_133();
-                    var div_13 = sibling(first_child(fragment_13));
-                    var node_12 = sibling(child(div_13));
+                  var consequent_19 = ($$anchor6) => {
+                    var fragment_16 = root_162();
+                    var div_28 = sibling(first_child(fragment_16));
+                    var node_20 = sibling(child(div_28));
                     {
-                      var consequent_8 = ($$anchor7) => {
-                        var fragment_14 = root_143();
-                        var p_2 = sibling(first_child(fragment_14));
-                        var text_9 = child(p_2, true);
-                        reset(p_2);
+                      var consequent_10 = ($$anchor7) => {
+                        var fragment_17 = root_173();
+                        var p_3 = sibling(first_child(fragment_17));
+                        var text_17 = child(p_3, true);
+                        reset(p_3);
                         next();
-                        template_effect(() => set_text(text_9, get(stage).description));
-                        append($$anchor7, fragment_14);
+                        template_effect(() => set_text(text_17, get(stage).description));
+                        append($$anchor7, fragment_17);
                       };
-                      if_block(node_12, ($$render) => {
+                      if_block(node_20, ($$render) => {
                         if (get(stage).description)
-                          $$render(consequent_8);
+                          $$render(consequent_10);
                       });
                     }
-                    var div_14 = sibling(node_12, 2);
-                    var div_15 = sibling(child(div_14), 3);
-                    var div_16 = sibling(child(div_15));
-                    var div_17 = sibling(child(div_16));
-                    var text_10 = sibling(child(div_17));
-                    reset(div_17);
-                    var div_18 = sibling(div_17, 2);
-                    var text_11 = sibling(child(div_18));
-                    reset(div_18);
-                    var div_19 = sibling(div_18, 2);
-                    var text_12 = sibling(child(div_19));
-                    reset(div_19);
-                    var div_20 = sibling(div_19, 2);
-                    var text_13 = sibling(child(div_20));
-                    reset(div_20);
-                    var div_21 = sibling(div_20, 2);
-                    var text_14 = sibling(child(div_21));
-                    reset(div_21);
+                    var div_29 = sibling(node_20, 2);
+                    var div_30 = sibling(child(div_29), 3);
+                    var div_31 = sibling(child(div_30));
+                    var div_32 = sibling(child(div_31));
+                    var text_18 = sibling(child(div_32));
+                    reset(div_32);
+                    var div_33 = sibling(div_32, 2);
+                    var text_19 = sibling(child(div_33));
+                    reset(div_33);
+                    var div_34 = sibling(div_33, 2);
+                    var text_20 = sibling(child(div_34));
+                    reset(div_34);
+                    var div_35 = sibling(div_34, 2);
+                    var text_21 = sibling(child(div_35));
+                    reset(div_35);
+                    var div_36 = sibling(div_35, 2);
+                    var text_22 = sibling(child(div_36));
+                    reset(div_36);
                     next();
-                    reset(div_16);
-                    next();
-                    reset(div_15);
-                    next();
-                    reset(div_14);
-                    var div_22 = sibling(div_14, 2);
-                    var pre = sibling(child(div_22), 3);
-                    var text_15 = child(pre, true);
-                    reset(pre);
-                    next();
-                    reset(div_22);
-                    var div_23 = sibling(div_22, 2);
-                    var pre_1 = sibling(child(div_23), 3);
-                    var text_16 = child(pre_1, true);
-                    reset(pre_1);
-                    next();
-                    reset(div_23);
-                    var node_13 = sibling(div_23, 2);
-                    {
-                      var consequent_11 = ($$anchor7) => {
-                        var fragment_15 = root_153();
-                        var div_24 = sibling(first_child(fragment_15));
-                        var div_25 = sibling(child(div_24), 3);
-                        var node_14 = sibling(child(div_25));
-                        each(node_14, 17, () => get(stage).prompt.variables, index, ($$anchor8, variable) => {
-                          next();
-                          var fragment_16 = root_162();
-                          var div_26 = sibling(first_child(fragment_16));
-                          var code = sibling(child(div_26));
-                          var text_17 = child(code, true);
-                          reset(code);
-                          var span_4 = sibling(code, 4);
-                          var text_18 = child(span_4);
-                          var node_15 = sibling(text_18);
-                          {
-                            var consequent_9 = ($$anchor9) => {
-                              var fragment_17 = root_173();
-                              var span_5 = sibling(first_child(fragment_17));
-                              var text_19 = child(span_5);
-                              reset(span_5);
-                              next();
-                              template_effect(() => set_text(text_19, `(${get(variable).stageId ?? ""})`));
-                              append($$anchor9, fragment_17);
-                            };
-                            if_block(node_15, ($$render) => {
-                              if (get(variable).stageId)
-                                $$render(consequent_9);
-                            });
-                          }
-                          var node_16 = sibling(node_15, 2);
-                          {
-                            var consequent_10 = ($$anchor9) => {
-                              var fragment_18 = root_182();
-                              var span_6 = sibling(first_child(fragment_18));
-                              var text_20 = child(span_6);
-                              reset(span_6);
-                              next();
-                              template_effect(() => set_text(text_20, `.${get(variable).path ?? ""}`));
-                              append($$anchor9, fragment_18);
-                            };
-                            if_block(node_16, ($$render) => {
-                              if (get(variable).path)
-                                $$render(consequent_10);
-                            });
-                          }
-                          next();
-                          reset(span_4);
-                          next();
-                          reset(div_26);
-                          next();
-                          template_effect(() => {
-                            set_text(text_17, `{{${get(variable).name}}}`);
-                            set_text(text_18, `
-                            ${get(variable).source ?? ""}
-                            `);
-                          });
-                          append($$anchor8, fragment_16);
-                        });
-                        next();
-                        reset(div_25);
-                        next();
-                        reset(div_24);
-                        next();
-                        append($$anchor7, fragment_15);
-                      };
-                      if_block(node_13, ($$render) => {
-                        if (get(stage).prompt.variables?.length)
-                          $$render(consequent_11);
-                      });
-                    }
-                    var div_27 = sibling(node_13, 2);
-                    var div_28 = sibling(child(div_27), 3);
-                    var div_29 = sibling(child(div_28));
-                    var text_21 = sibling(child(div_29));
-                    reset(div_29);
-                    var div_30 = sibling(div_29, 2);
-                    var node_17 = sibling(child(div_30));
-                    each(node_17, 17, () => get(stage).output.extract || [], index, ($$anchor7, field) => {
-                      next();
-                      var fragment_19 = root_193();
-                      var span_7 = sibling(first_child(fragment_19));
-                      var text_22 = child(span_7);
-                      var node_18 = sibling(text_22);
-                      {
-                        var consequent_12 = ($$anchor8) => {
-                          var span_8 = root_202();
-                          append($$anchor8, span_8);
-                        };
-                        if_block(node_18, ($$render) => {
-                          if (get(field).required)
-                            $$render(consequent_12);
-                        });
-                      }
-                      next();
-                      reset(span_7);
-                      next();
-                      template_effect(() => set_text(text_22, `
-                          ${get(field).name ?? ""}`));
-                      append($$anchor7, fragment_19);
-                    });
+                    reset(div_31);
                     next();
                     reset(div_30);
                     next();
-                    reset(div_28);
+                    reset(div_29);
+                    var div_37 = sibling(div_29, 2);
+                    var pre = sibling(child(div_37), 3);
+                    var text_23 = child(pre, true);
+                    reset(pre);
                     next();
-                    reset(div_27);
-                    var node_19 = sibling(div_27, 2);
+                    reset(div_37);
+                    var div_38 = sibling(div_37, 2);
+                    var pre_1 = sibling(child(div_38), 3);
+                    var text_24 = child(pre_1, true);
+                    reset(pre_1);
+                    next();
+                    reset(div_38);
+                    var node_21 = sibling(div_38, 2);
                     {
-                      var consequent_16 = ($$anchor7) => {
-                        var fragment_20 = root_21();
-                        var div_31 = sibling(first_child(fragment_20));
-                        var div_32 = sibling(child(div_31), 3);
-                        var node_20 = sibling(child(div_32));
+                      var consequent_13 = ($$anchor7) => {
+                        var fragment_18 = root_182();
+                        var div_39 = sibling(first_child(fragment_18));
+                        var div_40 = sibling(child(div_39), 3);
+                        var node_22 = sibling(child(div_40));
+                        each(node_22, 17, () => get(stage).prompt.variables, index, ($$anchor8, variable) => {
+                          next();
+                          var fragment_19 = root_193();
+                          var div_41 = sibling(first_child(fragment_19));
+                          var code = sibling(child(div_41));
+                          var text_25 = child(code, true);
+                          reset(code);
+                          var span_7 = sibling(code, 4);
+                          var text_26 = child(span_7);
+                          var node_23 = sibling(text_26);
+                          {
+                            var consequent_11 = ($$anchor9) => {
+                              var fragment_20 = root_202();
+                              var span_8 = sibling(first_child(fragment_20));
+                              var text_27 = child(span_8);
+                              reset(span_8);
+                              next();
+                              template_effect(() => set_text(text_27, `(${get(variable).stageId ?? ""})`));
+                              append($$anchor9, fragment_20);
+                            };
+                            if_block(node_23, ($$render) => {
+                              if (get(variable).stageId)
+                                $$render(consequent_11);
+                            });
+                          }
+                          var node_24 = sibling(node_23, 2);
+                          {
+                            var consequent_12 = ($$anchor9) => {
+                              var fragment_21 = root_21();
+                              var span_9 = sibling(first_child(fragment_21));
+                              var text_28 = child(span_9);
+                              reset(span_9);
+                              next();
+                              template_effect(() => set_text(text_28, `.${get(variable).path ?? ""}`));
+                              append($$anchor9, fragment_21);
+                            };
+                            if_block(node_24, ($$render) => {
+                              if (get(variable).path)
+                                $$render(consequent_12);
+                            });
+                          }
+                          next();
+                          reset(span_7);
+                          next();
+                          reset(div_41);
+                          next();
+                          template_effect(() => {
+                            set_text(text_25, `{{${get(variable).name}}}`);
+                            set_text(text_26, `
+                            ${get(variable).source ?? ""}
+                            `);
+                          });
+                          append($$anchor8, fragment_19);
+                        });
+                        next();
+                        reset(div_40);
+                        next();
+                        reset(div_39);
+                        next();
+                        append($$anchor7, fragment_18);
+                      };
+                      if_block(node_21, ($$render) => {
+                        if (get(stage).prompt.variables?.length)
+                          $$render(consequent_13);
+                      });
+                    }
+                    var div_42 = sibling(node_21, 2);
+                    var div_43 = sibling(child(div_42), 3);
+                    var div_44 = sibling(child(div_43));
+                    var text_29 = sibling(child(div_44));
+                    reset(div_44);
+                    var div_45 = sibling(div_44, 2);
+                    var node_25 = sibling(child(div_45));
+                    each(node_25, 17, () => get(stage).output.extract || [], index, ($$anchor7, field) => {
+                      next();
+                      var fragment_22 = root_222();
+                      var span_10 = sibling(first_child(fragment_22));
+                      var text_30 = child(span_10);
+                      var node_26 = sibling(text_30);
+                      {
+                        var consequent_14 = ($$anchor8) => {
+                          var span_11 = root_232();
+                          append($$anchor8, span_11);
+                        };
+                        if_block(node_26, ($$render) => {
+                          if (get(field).required)
+                            $$render(consequent_14);
+                        });
+                      }
+                      next();
+                      reset(span_10);
+                      next();
+                      template_effect(() => set_text(text_30, `
+                          ${get(field).name ?? ""}`));
+                      append($$anchor7, fragment_22);
+                    });
+                    next();
+                    reset(div_45);
+                    next();
+                    reset(div_43);
+                    next();
+                    reset(div_42);
+                    var node_27 = sibling(div_42, 2);
+                    {
+                      var consequent_18 = ($$anchor7) => {
+                        var fragment_23 = root_242();
+                        var div_46 = sibling(first_child(fragment_23));
+                        var div_47 = sibling(child(div_46), 3);
+                        var node_28 = sibling(child(div_47));
                         {
-                          var consequent_13 = ($$anchor8) => {
-                            var fragment_21 = root_222();
-                            var div_33 = sibling(first_child(fragment_21));
-                            var code_1 = sibling(child(div_33), 3);
-                            var text_23 = child(code_1, true);
+                          var consequent_15 = ($$anchor8) => {
+                            var fragment_24 = root_25();
+                            var div_48 = sibling(first_child(fragment_24));
+                            var code_1 = sibling(child(div_48), 3);
+                            var text_31 = child(code_1, true);
                             reset(code_1);
-                            var span_9 = sibling(code_1, 2);
-                            var text_24 = child(span_9);
-                            reset(span_9);
+                            var span_12 = sibling(code_1, 2);
+                            var text_32 = child(span_12);
+                            reset(span_12);
                             next();
-                            reset(div_33);
+                            reset(div_48);
                             next();
                             template_effect(($0) => {
-                              set_text(text_23, $0);
-                              set_text(text_24, ` from ${get(stage).conditions.skipIf.sourceStage ?? ""}`);
+                              set_text(text_31, $0);
+                              set_text(text_32, ` from ${get(stage).conditions.skipIf.sourceStage ?? ""}`);
                             }, [
                               () => JSON.stringify(get(stage).conditions.skipIf.condition)
                             ]);
-                            append($$anchor8, fragment_21);
+                            append($$anchor8, fragment_24);
                           };
-                          if_block(node_20, ($$render) => {
+                          if_block(node_28, ($$render) => {
                             if (get(stage).conditions.skipIf)
-                              $$render(consequent_13);
-                          });
-                        }
-                        var node_21 = sibling(node_20, 2);
-                        {
-                          var consequent_14 = ($$anchor8) => {
-                            var fragment_22 = root_232();
-                            var div_34 = sibling(first_child(fragment_22));
-                            var code_2 = sibling(child(div_34), 3);
-                            var text_25 = child(code_2, true);
-                            reset(code_2);
-                            var span_10 = sibling(code_2, 2);
-                            var text_26 = child(span_10);
-                            reset(span_10);
-                            next();
-                            reset(div_34);
-                            next();
-                            template_effect(($0) => {
-                              set_text(text_25, $0);
-                              set_text(text_26, ` from ${get(stage).conditions.runIf.sourceStage ?? ""}`);
-                            }, [
-                              () => JSON.stringify(get(stage).conditions.runIf.condition)
-                            ]);
-                            append($$anchor8, fragment_22);
-                          };
-                          if_block(node_21, ($$render) => {
-                            if (get(stage).conditions.runIf)
-                              $$render(consequent_14);
-                          });
-                        }
-                        var node_22 = sibling(node_21, 2);
-                        {
-                          var consequent_15 = ($$anchor8) => {
-                            var fragment_23 = root_242();
-                            var div_35 = sibling(first_child(fragment_23));
-                            var code_3 = sibling(child(div_35), 3);
-                            var text_27 = child(code_3, true);
-                            reset(code_3);
-                            var span_11 = sibling(code_3, 2);
-                            var text_28 = child(span_11);
-                            reset(span_11);
-                            next();
-                            reset(div_35);
-                            next();
-                            template_effect(($0) => {
-                              set_text(text_27, $0);
-                              set_text(text_28, ` return to ${get(stage).conditions.earlyExit.returnStage ?? ""}`);
-                            }, [
-                              () => JSON.stringify(get(stage).conditions.earlyExit.condition)
-                            ]);
-                            append($$anchor8, fragment_23);
-                          };
-                          if_block(node_22, ($$render) => {
-                            if (get(stage).conditions.earlyExit)
                               $$render(consequent_15);
                           });
                         }
+                        var node_29 = sibling(node_28, 2);
+                        {
+                          var consequent_16 = ($$anchor8) => {
+                            var fragment_25 = root_26();
+                            var div_49 = sibling(first_child(fragment_25));
+                            var code_2 = sibling(child(div_49), 3);
+                            var text_33 = child(code_2, true);
+                            reset(code_2);
+                            var span_13 = sibling(code_2, 2);
+                            var text_34 = child(span_13);
+                            reset(span_13);
+                            next();
+                            reset(div_49);
+                            next();
+                            template_effect(($0) => {
+                              set_text(text_33, $0);
+                              set_text(text_34, ` from ${get(stage).conditions.runIf.sourceStage ?? ""}`);
+                            }, [
+                              () => JSON.stringify(get(stage).conditions.runIf.condition)
+                            ]);
+                            append($$anchor8, fragment_25);
+                          };
+                          if_block(node_29, ($$render) => {
+                            if (get(stage).conditions.runIf)
+                              $$render(consequent_16);
+                          });
+                        }
+                        var node_30 = sibling(node_29, 2);
+                        {
+                          var consequent_17 = ($$anchor8) => {
+                            var fragment_26 = root_27();
+                            var div_50 = sibling(first_child(fragment_26));
+                            var code_3 = sibling(child(div_50), 3);
+                            var text_35 = child(code_3, true);
+                            reset(code_3);
+                            var span_14 = sibling(code_3, 2);
+                            var text_36 = child(span_14);
+                            reset(span_14);
+                            next();
+                            reset(div_50);
+                            next();
+                            template_effect(($0) => {
+                              set_text(text_35, $0);
+                              set_text(text_36, ` return to ${get(stage).conditions.earlyExit.returnStage ?? ""}`);
+                            }, [
+                              () => JSON.stringify(get(stage).conditions.earlyExit.condition)
+                            ]);
+                            append($$anchor8, fragment_26);
+                          };
+                          if_block(node_30, ($$render) => {
+                            if (get(stage).conditions.earlyExit)
+                              $$render(consequent_17);
+                          });
+                        }
                         next();
-                        reset(div_32);
+                        reset(div_47);
                         next();
-                        reset(div_31);
+                        reset(div_46);
                         next();
-                        append($$anchor7, fragment_20);
+                        append($$anchor7, fragment_23);
                       };
-                      if_block(node_19, ($$render) => {
+                      if_block(node_27, ($$render) => {
                         if (get(stage).conditions?.skipIf || get(stage).conditions?.runIf || get(stage).conditions?.earlyExit)
-                          $$render(consequent_16);
+                          $$render(consequent_18);
                       });
                     }
                     next();
-                    reset(div_13);
+                    reset(div_28);
                     next();
                     template_effect(() => {
-                      set_text(text_10, ` ${get(stage).model.providerID ?? ""}`);
-                      set_text(text_11, ` ${get(stage).model.modelID ?? ""}`);
-                      set_text(text_12, ` ${get(stage).model.tier ?? ""}`);
-                      set_text(text_13, ` ${get(stage).model.maxTokens ?? ""}`);
-                      set_text(text_14, ` ${get(stage).model.temperature ?? ""}`);
-                      set_text(text_15, get(stage).prompt.systemPrompt);
-                      set_text(text_16, get(stage).prompt.template);
-                      set_text(text_21, ` ${get(stage).output.format ?? ""}`);
+                      set_text(text_18, ` ${get(stage).model.providerID ?? ""}`);
+                      set_text(text_19, ` ${get(stage).model.modelID ?? ""}`);
+                      set_text(text_20, ` ${get(stage).model.tier ?? ""}`);
+                      set_text(text_21, ` ${get(stage).model.maxTokens ?? ""}`);
+                      set_text(text_22, ` ${get(stage).model.temperature ?? ""}`);
+                      set_text(text_23, get(stage).prompt.systemPrompt);
+                      set_text(text_24, get(stage).prompt.template);
+                      set_text(text_29, ` ${get(stage).output.format ?? ""}`);
                     });
-                    append($$anchor6, fragment_13);
+                    append($$anchor6, fragment_16);
                   };
-                  if_block(node_11, ($$render) => {
+                  if_block(node_19, ($$render) => {
                     if (get(expandedStage) === get(stage).id)
-                      $$render(consequent_17);
+                      $$render(consequent_19);
                   });
                 }
                 next();
-                reset(div_8);
-                var node_23 = sibling(div_8, 2);
+                reset(div_23);
+                var node_31 = sibling(div_23, 2);
                 {
-                  var consequent_18 = ($$anchor6) => {
-                    var fragment_24 = root_25();
+                  var consequent_20 = ($$anchor6) => {
+                    var fragment_27 = root_28();
                     next(2);
-                    append($$anchor6, fragment_24);
+                    append($$anchor6, fragment_27);
                   };
-                  if_block(node_23, ($$render) => {
+                  if_block(node_31, ($$render) => {
                     if (index2 < get(pipeline).stages.length - 1)
-                      $$render(consequent_18);
+                      $$render(consequent_20);
                   });
                 }
                 next();
-                reset(div_7);
+                reset(div_22);
                 next();
                 template_effect(($0) => {
-                  set_class(div_8, 1, `bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden ${get(expandedStage) === get(stage).id ? "ring-2 ring-blue-200" : ""}`);
-                  set_text(text_5, get(stage).name);
-                  set_class(span_2, 1, `text-xs px-2 py-0.5 rounded-full border ${(stageTypeColors[get(stage).type] || stageTypeColors.custom) ?? ""}`);
-                  set_text(text_6, `
+                  set_class(div_23, 1, `bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden ${get(expandedStage) === get(stage).id ? "ring-2 ring-blue-200" : ""}`);
+                  set_text(text_13, get(stage).name);
+                  set_class(span_5, 1, `text-xs px-2 py-0.5 rounded-full border ${(stageTypeColors[get(stage).type] || stageTypeColors.custom) ?? ""}`);
+                  set_text(text_14, `
                     ${(stageTypeIcons[get(stage).type] || "⚙️") ?? ""} ${get(stage).type ?? ""}
                   `);
-                  set_text(text_7, `
+                  set_text(text_15, `
                   ${$0 ?? ""} · temp: ${get(stage).model.temperature ?? ""}
                 `);
-                  set_text(text_8, get(expandedStage) === get(stage).id ? "−" : "+");
+                  set_text(text_16, get(expandedStage) === get(stage).id ? "−" : "+");
                 }, [() => getModelShortName(get(stage).model.modelID)]);
-                append($$anchor5, fragment_10);
+                append($$anchor5, fragment_13);
               });
               next();
-              reset(div_6);
+              reset(div_21);
               next();
               template_effect(() => {
                 set_text(text_1, get(pipeline).pipeline.name);
@@ -8011,7 +8257,7 @@ function PipelineDetail($$anchor, $$props) {
             };
             if_block(node_2, ($$render) => {
               if (get(pipeline))
-                $$render(consequent_19);
+                $$render(consequent_21);
             }, true);
           }
           append($$anchor3, fragment_4);
@@ -8045,7 +8291,7 @@ delegate(["click"]);
 var root_114 = from_html(`
         <option> </option>
       `, 1);
-var root_26 = from_html(`
+var root_29 = from_html(`
     <div class="flex items-center justify-center h-64">
       <div class="text-slate-500">Loading outputs...</div>
     </div>
@@ -8061,7 +8307,7 @@ var root_67 = from_html(`
     </div>
   `, 1);
 var root_94 = from_html(`
-            <button class="w-full bg-white rounded-xl p-4 shadow-sm border border-slate-200 text-left hover:shadow-md hover:border-slate-300 transition-all">
+            <button class="w-full bg-white rounded-xl p-4 shadow-sm border border-slate-200 text-left hover:shadow-md hover:border-slate-300 transition-all cursor-pointer">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-3">
                   <span class="text-xl">
@@ -8195,7 +8441,7 @@ function OutputList($$anchor, $$props) {
   var node_1 = sibling(div_1, 2);
   {
     var consequent = ($$anchor2) => {
-      var fragment_2 = root_26();
+      var fragment_2 = root_29();
       next(2);
       append($$anchor2, fragment_2);
     };
@@ -8466,7 +8712,7 @@ var root_243 = from_html(`
             `, 1);
 var root_85 = from_html(`
           <div>
-            <button class="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors">
+            <button class="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors cursor-pointer">
               <span class="text-xl">
                 <!>
               </span>
@@ -8549,7 +8795,7 @@ var root_58 = from_html(`
     <div class="bg-white rounded-xl shadow-sm border border-slate-200">
       <div class="p-4 border-b border-slate-200 flex items-center justify-between">
         <h2 class="font-semibold text-slate-700">Final Output</h2>
-        <button class="text-sm px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"> </button>
+        <button class="text-sm px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer"> </button>
       </div>
       <div class="p-4">
         <pre class="text-sm whitespace-pre-wrap bg-slate-800 text-slate-100 p-4 rounded-lg overflow-x-auto max-h-[32rem]"> </pre>
@@ -8559,7 +8805,7 @@ var root_58 = from_html(`
 var root11 = from_html(`
 
 <div>
-  <button class="text-slate-500 hover:text-slate-700 mb-4 flex items-center gap-1">
+  <button class="text-slate-500 hover:text-slate-700 mb-4 flex items-center gap-1 cursor-pointer">
     ← Back to Outputs
   </button>
 
@@ -9018,8 +9264,8 @@ function OutputDetail($$anchor, $$props) {
                     reset(div_28);
                     next();
                     template_effect(($0, $1) => {
-                      set_class(button_2, 1, `text-xs px-3 py-1 rounded-lg border ${get(showRaw)[get(stage).stageId] ? "bg-white border-slate-300" : "bg-blue-50 border-blue-200 text-blue-700"}`);
-                      set_class(button_3, 1, `text-xs px-3 py-1 rounded-lg border ${get(showRaw)[get(stage).stageId] ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-white border-slate-300"}`);
+                      set_class(button_2, 1, `text-xs px-3 py-1 rounded-lg border cursor-pointer ${get(showRaw)[get(stage).stageId] ? "bg-white border-slate-300" : "bg-blue-50 border-blue-200 text-blue-700"}`);
+                      set_class(button_3, 1, `text-xs px-3 py-1 rounded-lg border cursor-pointer ${get(showRaw)[get(stage).stageId] ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-white border-slate-300"}`);
                       set_text(text_24, `Input: ${$0 ?? ""} tokens`);
                       set_text(text_25, `Output: ${$1 ?? ""} tokens`);
                     }, [
@@ -9147,7 +9393,7 @@ delegate(["click"]);
 // web/components/execution/ExecutionCard.svelte
 var root12 = from_html(`
 
-<button class="w-full text-left p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all group">
+<button class="w-full text-left p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all group cursor-pointer">
   <div class="flex items-start justify-between mb-2">
     <div class="flex items-center gap-2">
       <span class="text-lg">\uD83D\uDD27</span>
@@ -9317,7 +9563,7 @@ var root_117 = from_html(`
   `, 1);
 var root13 = from_html(`
 
-<button class="w-full text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all group">
+<button class="w-full text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all group cursor-pointer">
   <div class="flex items-center gap-4">
     <!-- Status Icon -->
     <div>
@@ -9563,19 +9809,19 @@ var root_144 = from_html(`
           <div class="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
             <div class="text-sm text-slate-500"> </div>
             <div class="flex items-center gap-2">
-              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer">
                 First
               </button>
-              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer">
                 Previous
               </button>
               <div class="flex items-center gap-1">
                 <!>
               </div>
-              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer">
                 Next
               </button>
-              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer">
                 Last
               </button>
             </div>
@@ -9888,7 +10134,7 @@ function RunningExecutions($$anchor, $$props) {
                     reset(button_2);
                     next();
                     template_effect(() => {
-                      set_class(button_2, 1, `w-8 h-8 text-sm rounded-lg transition-colors ${get(pageNum) === get(currentPage) ? "bg-blue-500 text-white" : "border border-slate-200 hover:bg-slate-50"}`);
+                      set_class(button_2, 1, `w-8 h-8 text-sm rounded-lg transition-colors cursor-pointer ${get(pageNum) === get(currentPage) ? "bg-blue-500 text-white" : "border border-slate-200 hover:bg-slate-50"}`);
                       set_text(text_4, `
                     ${get(pageNum) ?? ""}
                   `);
@@ -9966,7 +10212,7 @@ delegate(["click"]);
 var root_119 = from_html(`
       <span> </span>
     `, 1);
-var root_28 = from_html(`
+var root_211 = from_html(`
     <div class="flex items-center justify-center py-12">
       <div class="flex items-center gap-3 text-slate-500">
         <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -9982,7 +10228,7 @@ var root_47 = from_html(`
       <div class="text-4xl mb-4">\uD83D\uDE15</div>
       <p class="font-medium text-red-700 mb-2">Execution Not Found</p>
       <p class="text-red-600 text-sm mb-4"> </p>
-      <button class="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+      <button class="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer">
         <span>Back to Running Executions</span>
       </button>
     </div>
@@ -10052,25 +10298,42 @@ var root_224 = from_html(`
           <!>
         </div>
       `, 1);
-var root_252 = from_html(`
+var root_244 = from_html(`
+      <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-4 mb-6">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">\uD83C\uDF89</span>
+          <div class="flex-1">
+            <h3 class="font-semibold text-purple-800">Pipeline Auto-Saved!</h3>
+            <p class="text-purple-600 text-sm">
+              Your generated pipeline has been saved to:
+              <code class="bg-purple-100 px-2 py-0.5 rounded font-mono text-purple-700"> </code>
+            </p>
+          </div>
+          <button class="px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium cursor-pointer">
+            View Pipeline
+          </button>
+        </div>
+      </div>
+    `, 1);
+var root_262 = from_html(`
             <div class="prose prose-slate max-w-none">
               <pre class="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 bg-slate-50 rounded-lg p-4 max-h-[32rem] overflow-y-auto"> </pre>
             </div>
           `, 1);
-var root_27 = from_html(`
+var root_282 = from_html(`
             <pre class="text-sm bg-slate-800 text-slate-100 rounded-lg p-4 overflow-x-auto max-h-[32rem] overflow-y-auto font-mono"> </pre>
           `, 1);
-var root_282 = from_html(`
+var root_292 = from_html(`
             <pre class="text-sm text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded-lg p-4 max-h-[32rem] overflow-y-auto font-mono"> </pre>
           `, 1);
-var root_244 = from_html(`
+var root_252 = from_html(`
       <div class="bg-white rounded-xl border border-slate-200 mb-6 overflow-hidden">
         <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50">
           <div class="flex items-center gap-2">
             <span class="text-green-600 text-lg">✨</span>
             <h3 class="font-semibold text-slate-800"> </h3>
           </div>
-          <button class="text-sm px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-1.5">
+          <button class="text-sm px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-1.5 cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
             </svg>
@@ -10082,7 +10345,7 @@ var root_244 = from_html(`
         </div>
       </div>
     `, 1);
-var root_30 = from_html(`
+var root_31 = from_html(`
           <div class="grid grid-cols-3 gap-4">
             <div class="bg-slate-50 rounded-lg p-3">
               <div class="text-xs text-slate-500">Duration</div>
@@ -10098,13 +10361,13 @@ var root_30 = from_html(`
             </div>
           </div>
         `, 1);
-var root_31 = from_html(`
+var root_322 = from_html(`
           <div class="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
             <div class="text-xs font-medium text-red-500 mb-1">Error</div>
             <div class="text-sm text-red-700"> </div>
           </div>
         `, 1);
-var root_29 = from_html(`
+var root_30 = from_html(`
       <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
         <h3 class="text-sm font-medium text-slate-700 mb-3">Execution Summary</h3>
 
@@ -10113,8 +10376,8 @@ var root_29 = from_html(`
         <!>
       </div>
     `, 1);
-var root_322 = from_html(`
-        <button class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+var root_332 = from_html(`
+        <button class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer">
           Cancel Execution
         </button>
       `, 1);
@@ -10159,6 +10422,9 @@ var root_69 = from_html(`
       <!>
     </div>
 
+    <!-- Saved Pipeline Notice -->
+    <!>
+
     <!-- Final Output - Main Result -->
     <!>
 
@@ -10167,7 +10433,7 @@ var root_69 = from_html(`
 
     <!-- Actions -->
     <div class="flex gap-3">
-      <button class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
+      <button class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors cursor-pointer">
         View Pipeline
       </button>
       <!>
@@ -10178,7 +10444,7 @@ var root15 = from_html(`
 <div class="max-w-4xl">
   <!-- Header -->
   <div class="flex items-center gap-4 mb-6">
-    <button class="p-2 rounded-lg hover:bg-slate-100 transition-colors" title="Back to Running Executions">
+    <button class="p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer" title="Back to Running Executions">
       <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
       </svg>
@@ -10490,7 +10756,7 @@ function ExecutionDetail($$anchor, $$props) {
   var node_2 = sibling(div_1, 2);
   {
     var consequent_1 = ($$anchor2) => {
-      var fragment_2 = root_28();
+      var fragment_2 = root_211();
       next(2);
       append($$anchor2, fragment_2);
     };
@@ -10516,7 +10782,7 @@ function ExecutionDetail($$anchor, $$props) {
           var fragment_5 = comment();
           var node_4 = first_child(fragment_5);
           {
-            var consequent_19 = ($$anchor4) => {
+            var consequent_20 = ($$anchor4) => {
               var fragment_6 = root_69();
               var node_5 = sibling(first_child(fragment_6));
               var div_4 = sibling(node_5, 2);
@@ -10744,124 +11010,157 @@ function ExecutionDetail($$anchor, $$props) {
               var node_20 = sibling(div_15, 2);
               var node_21 = sibling(node_20, 2);
               {
-                var consequent_14 = ($$anchor5) => {
+                var consequent_12 = ($$anchor5) => {
                   var fragment_24 = root_244();
                   var div_18 = sibling(first_child(fragment_24));
                   var div_19 = sibling(child(div_18));
-                  var div_20 = sibling(child(div_19));
-                  var h3 = sibling(child(div_20), 3);
-                  var text_8 = child(h3, true);
-                  reset(h3);
+                  var div_20 = sibling(child(div_19), 3);
+                  var p_2 = sibling(child(div_20), 3);
+                  var code = sibling(child(p_2));
+                  var text_8 = child(code);
+                  reset(code);
+                  next();
+                  reset(p_2);
                   next();
                   reset(div_20);
                   var button_2 = sibling(div_20, 2);
-                  button_2.__click = () => {
+                  button_2.__click = () => $$props.navigate(`/pipelines/${get(execution).result.savedPipeline.filename.replace(".ts", "")}`);
+                  next();
+                  reset(div_19);
+                  next();
+                  reset(div_18);
+                  next();
+                  template_effect(() => set_text(text_8, `
+                pipelines/${get(execution).result.savedPipeline.filename ?? ""}
+              `));
+                  append($$anchor5, fragment_24);
+                };
+                if_block(node_21, ($$render) => {
+                  if (get(execution).result?.savedPipeline)
+                    $$render(consequent_12);
+                });
+              }
+              var node_22 = sibling(node_21, 2);
+              var node_23 = sibling(node_22, 2);
+              {
+                var consequent_15 = ($$anchor5) => {
+                  var fragment_25 = root_252();
+                  var div_21 = sibling(first_child(fragment_25));
+                  var div_22 = sibling(child(div_21));
+                  var div_23 = sibling(child(div_22));
+                  var h3 = sibling(child(div_23), 3);
+                  var text_9 = child(h3, true);
+                  reset(h3);
+                  next();
+                  reset(div_23);
+                  var button_3 = sibling(div_23, 2);
+                  button_3.__click = () => {
                     navigator.clipboard.writeText(get(finalOutput).content);
                   };
                   next();
-                  reset(div_19);
-                  var div_21 = sibling(div_19, 2);
-                  var node_22 = sibling(child(div_21));
+                  reset(div_22);
+                  var div_24 = sibling(div_22, 2);
+                  var node_24 = sibling(child(div_24));
                   {
-                    var consequent_12 = ($$anchor6) => {
-                      var fragment_25 = root_252();
-                      var div_22 = sibling(first_child(fragment_25));
-                      var pre_1 = sibling(child(div_22));
-                      var text_9 = child(pre_1, true);
+                    var consequent_13 = ($$anchor6) => {
+                      var fragment_26 = root_262();
+                      var div_25 = sibling(first_child(fragment_26));
+                      var pre_1 = sibling(child(div_25));
+                      var text_10 = child(pre_1, true);
                       reset(pre_1);
                       next();
-                      reset(div_22);
+                      reset(div_25);
                       next();
-                      template_effect(() => set_text(text_9, get(finalOutput).content));
-                      append($$anchor6, fragment_25);
+                      template_effect(() => set_text(text_10, get(finalOutput).content));
+                      append($$anchor6, fragment_26);
                     };
                     var alternate_8 = ($$anchor6) => {
-                      var fragment_26 = comment();
-                      var node_23 = first_child(fragment_26);
+                      var fragment_27 = comment();
+                      var node_25 = first_child(fragment_27);
                       {
-                        var consequent_13 = ($$anchor7) => {
-                          var fragment_27 = root_27();
-                          var pre_2 = sibling(first_child(fragment_27));
-                          var text_10 = child(pre_2, true);
-                          reset(pre_2);
-                          next();
-                          template_effect(() => set_text(text_10, get(finalOutput).content));
-                          append($$anchor7, fragment_27);
-                        };
-                        var alternate_7 = ($$anchor7) => {
+                        var consequent_14 = ($$anchor7) => {
                           var fragment_28 = root_282();
-                          var pre_3 = sibling(first_child(fragment_28));
-                          var text_11 = child(pre_3, true);
-                          reset(pre_3);
+                          var pre_2 = sibling(first_child(fragment_28));
+                          var text_11 = child(pre_2, true);
+                          reset(pre_2);
                           next();
                           template_effect(() => set_text(text_11, get(finalOutput).content));
                           append($$anchor7, fragment_28);
                         };
-                        if_block(node_23, ($$render) => {
+                        var alternate_7 = ($$anchor7) => {
+                          var fragment_29 = root_292();
+                          var pre_3 = sibling(first_child(fragment_29));
+                          var text_12 = child(pre_3, true);
+                          reset(pre_3);
+                          next();
+                          template_effect(() => set_text(text_12, get(finalOutput).content));
+                          append($$anchor7, fragment_29);
+                        };
+                        if_block(node_25, ($$render) => {
                           if (get(finalOutput).type === "code")
-                            $$render(consequent_13);
+                            $$render(consequent_14);
                           else
                             $$render(alternate_7, false);
                         }, true);
                       }
-                      append($$anchor6, fragment_26);
+                      append($$anchor6, fragment_27);
                     };
-                    if_block(node_22, ($$render) => {
+                    if_block(node_24, ($$render) => {
                       if (get(finalOutput).type === "text")
-                        $$render(consequent_12);
+                        $$render(consequent_13);
                       else
                         $$render(alternate_8, false);
                     });
                   }
                   next();
+                  reset(div_24);
+                  next();
                   reset(div_21);
                   next();
-                  reset(div_18);
-                  next();
-                  template_effect(() => set_text(text_8, get(finalOutput).label));
-                  append($$anchor5, fragment_24);
+                  template_effect(() => set_text(text_9, get(finalOutput).label));
+                  append($$anchor5, fragment_25);
                 };
-                if_block(node_21, ($$render) => {
+                if_block(node_23, ($$render) => {
                   if (get(finalOutput))
-                    $$render(consequent_14);
+                    $$render(consequent_15);
                 });
               }
-              var node_24 = sibling(node_21, 2);
-              var node_25 = sibling(node_24, 2);
+              var node_26 = sibling(node_23, 2);
+              var node_27 = sibling(node_26, 2);
               {
-                var consequent_17 = ($$anchor5) => {
-                  var fragment_29 = root_29();
-                  var div_23 = sibling(first_child(fragment_29));
-                  var node_26 = sibling(child(div_23), 3);
+                var consequent_18 = ($$anchor5) => {
+                  var fragment_30 = root_30();
+                  var div_26 = sibling(first_child(fragment_30));
+                  var node_28 = sibling(child(div_26), 3);
                   {
-                    var consequent_15 = ($$anchor6) => {
-                      var fragment_30 = root_30();
-                      var div_24 = sibling(first_child(fragment_30));
-                      var div_25 = sibling(child(div_24));
-                      var div_26 = sibling(child(div_25), 3);
-                      var text_12 = child(div_26, true);
-                      reset(div_26);
-                      next();
-                      reset(div_25);
-                      var div_27 = sibling(div_25, 2);
-                      var div_28 = sibling(child(div_27), 3);
-                      var text_13 = child(div_28, true);
-                      reset(div_28);
-                      next();
-                      reset(div_27);
-                      var div_29 = sibling(div_27, 2);
-                      var div_30 = sibling(child(div_29), 3);
-                      var text_14 = child(div_30);
-                      reset(div_30);
-                      next();
+                    var consequent_16 = ($$anchor6) => {
+                      var fragment_31 = root_31();
+                      var div_27 = sibling(first_child(fragment_31));
+                      var div_28 = sibling(child(div_27));
+                      var div_29 = sibling(child(div_28), 3);
+                      var text_13 = child(div_29, true);
                       reset(div_29);
                       next();
-                      reset(div_24);
+                      reset(div_28);
+                      var div_30 = sibling(div_28, 2);
+                      var div_31 = sibling(child(div_30), 3);
+                      var text_14 = child(div_31, true);
+                      reset(div_31);
+                      next();
+                      reset(div_30);
+                      var div_32 = sibling(div_30, 2);
+                      var div_33 = sibling(child(div_32), 3);
+                      var text_15 = child(div_33);
+                      reset(div_33);
+                      next();
+                      reset(div_32);
+                      next();
+                      reset(div_27);
                       next();
                       template_effect(($0, $1) => {
-                        set_text(text_12, $0);
-                        set_text(text_13, $1);
-                        set_text(text_14, `
+                        set_text(text_13, $0);
+                        set_text(text_14, $1);
+                        set_text(text_15, `
                 ${get(execution).result.summary.stagesRun ?? ""} run,
                 ${get(execution).result.summary.stagesSkipped ?? ""} skipped,
                 ${get(execution).result.summary.stagesFailed ?? ""} failed
@@ -10870,64 +11169,64 @@ function ExecutionDetail($$anchor, $$props) {
                         () => formatDuration(get(execution).result.summary.totalDuration),
                         () => formatCost(get(execution).result.summary.totalCost)
                       ]);
-                      append($$anchor6, fragment_30);
-                    };
-                    if_block(node_26, ($$render) => {
-                      if (get(execution).result.summary)
-                        $$render(consequent_15);
-                    });
-                  }
-                  var node_27 = sibling(node_26, 2);
-                  {
-                    var consequent_16 = ($$anchor6) => {
-                      var fragment_31 = root_31();
-                      var div_31 = sibling(first_child(fragment_31));
-                      var div_32 = sibling(child(div_31), 3);
-                      var text_15 = child(div_32, true);
-                      reset(div_32);
-                      next();
-                      reset(div_31);
-                      next();
-                      template_effect(() => set_text(text_15, get(execution).result.error));
                       append($$anchor6, fragment_31);
                     };
-                    if_block(node_27, ($$render) => {
-                      if (get(execution).result.error)
+                    if_block(node_28, ($$render) => {
+                      if (get(execution).result.summary)
                         $$render(consequent_16);
                     });
                   }
+                  var node_29 = sibling(node_28, 2);
+                  {
+                    var consequent_17 = ($$anchor6) => {
+                      var fragment_32 = root_322();
+                      var div_34 = sibling(first_child(fragment_32));
+                      var div_35 = sibling(child(div_34), 3);
+                      var text_16 = child(div_35, true);
+                      reset(div_35);
+                      next();
+                      reset(div_34);
+                      next();
+                      template_effect(() => set_text(text_16, get(execution).result.error));
+                      append($$anchor6, fragment_32);
+                    };
+                    if_block(node_29, ($$render) => {
+                      if (get(execution).result.error)
+                        $$render(consequent_17);
+                    });
+                  }
                   next();
-                  reset(div_23);
+                  reset(div_26);
                   next();
-                  append($$anchor5, fragment_29);
+                  append($$anchor5, fragment_30);
                 };
-                if_block(node_25, ($$render) => {
+                if_block(node_27, ($$render) => {
                   if (get(execution).result)
-                    $$render(consequent_17);
-                });
-              }
-              var node_28 = sibling(node_25, 2);
-              var div_33 = sibling(node_28, 2);
-              var button_3 = sibling(child(div_33));
-              button_3.__click = () => $$props.navigate(`/pipelines/${get(execution).pipelineId}`);
-              var node_29 = sibling(button_3, 2);
-              {
-                var consequent_18 = ($$anchor5) => {
-                  var fragment_32 = root_322();
-                  var button_4 = sibling(first_child(fragment_32));
-                  button_4.__click = async () => {
-                    await fetch(`/api/executions/${$$props.executionId}/cancel`, { method: "POST" });
-                  };
-                  next();
-                  append($$anchor5, fragment_32);
-                };
-                if_block(node_29, ($$render) => {
-                  if (get(execution).status === "running")
                     $$render(consequent_18);
                 });
               }
+              var node_30 = sibling(node_27, 2);
+              var div_36 = sibling(node_30, 2);
+              var button_4 = sibling(child(div_36));
+              button_4.__click = () => $$props.navigate(`/pipelines/${get(execution).pipelineId}`);
+              var node_31 = sibling(button_4, 2);
+              {
+                var consequent_19 = ($$anchor5) => {
+                  var fragment_33 = root_332();
+                  var button_5 = sibling(first_child(fragment_33));
+                  button_5.__click = async () => {
+                    await fetch(`/api/executions/${$$props.executionId}/cancel`, { method: "POST" });
+                  };
+                  next();
+                  append($$anchor5, fragment_33);
+                };
+                if_block(node_31, ($$render) => {
+                  if (get(execution).status === "running")
+                    $$render(consequent_19);
+                });
+              }
               next();
-              reset(div_33);
+              reset(div_36);
               next();
               template_effect(($0) => {
                 set_text(text_4, get(elapsed));
@@ -10941,7 +11240,7 @@ function ExecutionDetail($$anchor, $$props) {
             };
             if_block(node_4, ($$render) => {
               if (get(execution))
-                $$render(consequent_19);
+                $$render(consequent_20);
             }, true);
           }
           append($$anchor3, fragment_5);
@@ -11230,5 +11529,5 @@ if (target) {
   mount(App_default, { target });
 }
 
-//# debugId=29F4A361273ACFA064756E2164756E21
+//# debugId=B1DFEB2A81601EA864756E2164756E21
 //# sourceMappingURL=app.js.map

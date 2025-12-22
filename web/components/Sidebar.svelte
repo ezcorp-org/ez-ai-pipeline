@@ -53,7 +53,7 @@
       <a
         href={item.path}
         onclick={(e) => handleClick(e, item.path)}
-        class="flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors {isActive(item.path) ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}"
+        class="flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors cursor-pointer {isActive(item.path) ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}"
       >
         <span class="text-lg">{item.icon}</span>
         <span class="flex-1">{item.label}</span>

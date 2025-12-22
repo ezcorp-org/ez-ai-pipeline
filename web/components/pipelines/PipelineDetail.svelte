@@ -3,6 +3,20 @@
 
   let { id, navigate }: { id: string; navigate: (path: string) => void } = $props();
 
+  interface ExecutionRecord {
+    id: string;
+    pipelineId: string;
+    pipelineName: string;
+    status: 'completed' | 'failed' | 'cancelled';
+    startTime: number;
+    duration: number;
+    totalStages: number;
+    stagesRun: number;
+    inputPreview: string;
+    totalCost: number;
+    error?: string;
+  }
+
   interface Stage {
     id: string;
     name: string;
@@ -52,6 +66,7 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
   let expandedStage = $state<string | null>(null);
+  let recentExecutions = $state<ExecutionRecord[]>([]);
 
   $effect(() => {
     loading = true;
@@ -69,6 +84,66 @@
         loading = false;
       });
   });
+
+  // Fetch recent executions for this pipeline
+  $effect(() => {
+    fetch('/api/executions/history?pageSize=10')
+      .then(r => r.json())
+      .then(data => {
+        // Filter to only show executions for this pipeline
+        recentExecutions = (data.executions || []).filter(
+          (exec: ExecutionRecord) => exec.pipelineId === id
+        ).slice(0, 5);
+      })
+      .catch(() => {
+        recentExecutions = [];
+      });
+  });
+
+  function formatDuration(ms: number): string {
+    if (ms < 1000) return `${ms}ms`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}m ${seconds}s`;
+  }
+
+  function formatCost(cost: number): string {
+    return `$${cost.toFixed(4)}`;
+  }
+
+  function formatTime(timestamp: number): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  }
+
+  function getStatusColor(status: string): string {
+    switch (status) {
+      case 'completed': return 'text-green-600 bg-green-50 border-green-200';
+      case 'failed': return 'text-red-600 bg-red-50 border-red-200';
+      case 'cancelled': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      default: return 'text-slate-600 bg-slate-50 border-slate-200';
+    }
+  }
+
+  function getStatusIcon(status: string): string {
+    switch (status) {
+      case 'completed': return '✓';
+      case 'failed': return '✕';
+      case 'cancelled': return '⏸';
+      default: return '•';
+    }
+  }
 
   const stageTypeColors: Record<string, string> = {
     analyze: "bg-blue-100 text-blue-700 border-blue-300",
@@ -106,7 +181,7 @@
 </script>
 
 <div>
-  <button onclick={() => navigate("/pipelines")} class="text-slate-500 hover:text-slate-700 mb-4 flex items-center gap-1">
+  <button onclick={() => navigate("/pipelines")} class="text-slate-500 hover:text-slate-700 mb-4 flex items-center gap-1 cursor-pointer">
     ← Back to Pipelines
   </button>
 
@@ -148,6 +223,76 @@
 
     <ExecutionForm pipelineId={pipeline.pipeline.id} pipelineName={pipeline.pipeline.name} stageCount={pipeline.stages.length} />
 
+    <!-- Recent Executions -->
+    {#if recentExecutions.length > 0}
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+          <h2 class="font-semibold text-slate-700">Recent Executions</h2>
+          <button
+            onclick={() => navigate('/running')}
+            class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer"
+          >
+            View all →
+          </button>
+        </div>
+        <div class="divide-y divide-slate-100">
+          {#each recentExecutions as execution}
+            <button
+              onclick={() => navigate(`/executions/${execution.id}`)}
+              class="w-full text-left p-4 hover:bg-slate-50 transition-colors cursor-pointer group"
+            >
+              <div class="flex items-center gap-4">
+                <!-- Status Icon -->
+                <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 {getStatusColor(execution.status)}">
+                  <span class="text-sm">{getStatusIcon(execution.status)}</span>
+                </div>
+
+                <!-- Execution Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs px-2 py-0.5 rounded-full font-medium {getStatusColor(execution.status)}">
+                      {execution.status}
+                    </span>
+                    <span class="text-xs text-slate-500">{formatTime(execution.startTime)}</span>
+                  </div>
+                  <p class="text-sm text-slate-600 truncate mt-1">
+                    "{execution.inputPreview}"
+                  </p>
+                </div>
+
+                <!-- Stats -->
+                <div class="flex items-center gap-4 shrink-0 text-xs text-slate-500">
+                  <div class="text-right">
+                    <div class="font-medium text-slate-700">{formatDuration(execution.duration)}</div>
+                    <div>duration</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="font-medium text-slate-700">{formatCost(execution.totalCost)}</div>
+                    <div>cost</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="font-medium text-slate-700">{execution.stagesRun}/{execution.totalStages}</div>
+                    <div>stages</div>
+                  </div>
+                </div>
+
+                <!-- Arrow -->
+                <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </div>
+
+              {#if execution.error}
+                <div class="mt-2 text-xs text-red-600 truncate pl-12">
+                  Error: {execution.error}
+                </div>
+              {/if}
+            </button>
+          {/each}
+        </div>
+      </div>
+    {/if}
+
     <div class="space-y-4">
       <h2 class="font-semibold text-slate-700 mb-4">Pipeline Stages</h2>
 
@@ -160,7 +305,7 @@
           <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden {expandedStage === stage.id ? 'ring-2 ring-blue-200' : ''}">
             <button
               onclick={() => toggleStage(stage.id)}
-              class="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors"
+              class="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <div class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-sm font-medium">
                 {index + 1}

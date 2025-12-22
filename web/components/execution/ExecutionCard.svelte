@@ -78,7 +78,7 @@
 
 <button
   onclick={handleClick}
-  class="w-full text-left p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all group"
+  class="w-full text-left p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all group cursor-pointer"
 >
   <div class="flex items-start justify-between mb-2">
     <div class="flex items-center gap-2">

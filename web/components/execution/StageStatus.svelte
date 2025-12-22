@@ -117,7 +117,7 @@
   }
 </script>
 
-<div class="rounded-lg border {statusColors[stage.status]} transition-all duration-300 {stage.output ? 'cursor-pointer hover:shadow-md' : ''}">
+<div class="rounded-lg border {statusColors[stage.status]} transition-all duration-300 {stage.output && onToggle ? 'cursor-pointer hover:shadow-md' : ''}">
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div

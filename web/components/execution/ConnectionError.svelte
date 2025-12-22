@@ -18,7 +18,7 @@
         {#if onReconnect}
           <button
             onclick={onReconnect}
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm cursor-pointer"
           >
             Reconnect
           </button>
@@ -26,7 +26,7 @@
         {#if onViewOutputs}
           <button
             onclick={onViewOutputs}
-            class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors text-sm"
+            class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors text-sm cursor-pointer"
           >
             View Outputs
           </button>

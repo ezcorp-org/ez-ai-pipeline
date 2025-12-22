@@ -55,7 +55,7 @@
       {#each history as entry}
         <button
           onclick={() => onSelect?.(entry.executionId)}
-          class="w-full text-left p-3 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors"
+          class="w-full text-left p-3 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
         >
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">

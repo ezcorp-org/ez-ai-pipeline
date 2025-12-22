@@ -79,7 +79,7 @@
       <div class="bg-white rounded-xl shadow-sm border border-slate-200">
         <div class="p-4 border-b border-slate-200 flex justify-between items-center">
           <h2 class="font-semibold text-slate-700">Pipelines</h2>
-          <button onclick={() => navigate("/pipelines")} class="text-sm text-blue-600 hover:text-blue-800">
+          <button onclick={() => navigate("/pipelines")} class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
             View all →
           </button>
         </div>
@@ -87,7 +87,7 @@
           {#each pipelines as pipeline}
             <button
               onclick={() => navigate(`/pipelines/${pipeline.id}`)}
-              class="w-full p-4 text-left hover:bg-slate-50 transition-colors"
+              class="w-full p-4 text-left hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <div class="font-medium text-slate-800">{pipeline.name}</div>
               <div class="text-sm text-slate-500">{pipeline.stageCount} stages</div>
@@ -101,7 +101,7 @@
       <div class="bg-white rounded-xl shadow-sm border border-slate-200">
         <div class="p-4 border-b border-slate-200 flex justify-between items-center">
           <h2 class="font-semibold text-slate-700">Recent Runs</h2>
-          <button onclick={() => navigate("/outputs")} class="text-sm text-blue-600 hover:text-blue-800">
+          <button onclick={() => navigate("/outputs")} class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
             View all →
           </button>
         </div>
@@ -109,7 +109,7 @@
           {#each outputs.slice(0, 5) as output}
             <button
               onclick={() => navigate(`/outputs/${output.filename}`)}
-              class="w-full p-4 text-left hover:bg-slate-50 transition-colors"
+              class="w-full p-4 text-left hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <div class="flex items-center justify-between">
                 <div class="font-medium text-slate-800">{output.pipelineId}</div>

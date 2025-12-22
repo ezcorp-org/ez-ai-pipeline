@@ -34,6 +34,9 @@
         stagesSkipped: number;
         stagesFailed: number;
       };
+      savedPipeline?: {
+        filename: string;
+      };
     };
   }
 
@@ -340,7 +343,7 @@
   <div class="flex items-center gap-4 mb-6">
     <button
       onclick={() => navigate('/running')}
-      class="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+      class="p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
       title="Back to Running Executions"
     >
       <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -379,7 +382,7 @@
       <p class="text-red-600 text-sm mb-4">{error}</p>
       <button
         onclick={() => navigate('/running')}
-        class="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer"
       >
         <span>Back to Running Executions</span>
       </button>
@@ -484,6 +487,30 @@
       {/if}
     </div>
 
+    <!-- Saved Pipeline Notice -->
+    {#if execution.result?.savedPipeline}
+      <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-4 mb-6">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🎉</span>
+          <div class="flex-1">
+            <h3 class="font-semibold text-purple-800">Pipeline Auto-Saved!</h3>
+            <p class="text-purple-600 text-sm">
+              Your generated pipeline has been saved to:
+              <code class="bg-purple-100 px-2 py-0.5 rounded font-mono text-purple-700">
+                pipelines/{execution.result.savedPipeline.filename}
+              </code>
+            </p>
+          </div>
+          <button
+            onclick={() => navigate(`/pipelines/${execution!.result!.savedPipeline!.filename!.replace('.ts', '')}`)}
+            class="px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium cursor-pointer"
+          >
+            View Pipeline
+          </button>
+        </div>
+      </div>
+    {/if}
+
     <!-- Final Output - Main Result -->
     {#if finalOutput}
       <div class="bg-white rounded-xl border border-slate-200 mb-6 overflow-hidden">
@@ -496,7 +523,7 @@
             onclick={() => {
               navigator.clipboard.writeText(finalOutput!.content);
             }}
-            class="text-sm px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-1.5"
+            class="text-sm px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
@@ -557,7 +584,7 @@
     <div class="flex gap-3">
       <button
         onclick={() => navigate(`/pipelines/${execution!.pipelineId}`)}
-        class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+        class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors cursor-pointer"
       >
         View Pipeline
       </button>
@@ -566,7 +593,7 @@
           onclick={async () => {
             await fetch(`/api/executions/${executionId}/cancel`, { method: 'POST' });
           }}
-          class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer"
         >
           Cancel Execution
         </button>

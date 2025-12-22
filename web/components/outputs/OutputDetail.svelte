@@ -148,7 +148,7 @@
 </script>
 
 <div>
-  <button onclick={() => navigate("/outputs")} class="text-slate-500 hover:text-slate-700 mb-4 flex items-center gap-1">
+  <button onclick={() => navigate("/outputs")} class="text-slate-500 hover:text-slate-700 mb-4 flex items-center gap-1 cursor-pointer">
     ← Back to Outputs
   </button>
 
@@ -222,7 +222,7 @@
           <div>
             <button
               onclick={() => toggleStage(stage.stageId)}
-              class="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors"
+              class="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <span class="text-xl">
                 {#if stage.status === "completed"}
@@ -263,13 +263,13 @@
                 <div class="flex gap-2 mb-3">
                   <button
                     onclick={() => toggleRaw(stage.stageId)}
-                    class="text-xs px-3 py-1 rounded-lg border {showRaw[stage.stageId] ? 'bg-white border-slate-300' : 'bg-blue-50 border-blue-200 text-blue-700'}"
+                    class="text-xs px-3 py-1 rounded-lg border cursor-pointer {showRaw[stage.stageId] ? 'bg-white border-slate-300' : 'bg-blue-50 border-blue-200 text-blue-700'}"
                   >
                     Parsed
                   </button>
                   <button
                     onclick={() => toggleRaw(stage.stageId)}
-                    class="text-xs px-3 py-1 rounded-lg border {showRaw[stage.stageId] ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-slate-300'}"
+                    class="text-xs px-3 py-1 rounded-lg border cursor-pointer {showRaw[stage.stageId] ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-slate-300'}"
                   >
                     Raw
                   </button>
@@ -305,7 +305,7 @@
         <h2 class="font-semibold text-slate-700">Final Output</h2>
         <button
           onclick={copyToClipboard}
-          class="text-sm px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+          class="text-sm px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer"
         >
           {copied ? "Copied!" : "Copy"}
         </button>

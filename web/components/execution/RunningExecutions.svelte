@@ -226,14 +226,14 @@
               <button
                 onclick={() => goToPage(1)}
                 disabled={currentPage === 1}
-                class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 First
               </button>
               <button
                 onclick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Previous
               </button>
@@ -244,7 +244,7 @@
                 }).filter(p => p <= historyPage.totalPages) as pageNum}
                   <button
                     onclick={() => goToPage(pageNum)}
-                    class="w-8 h-8 text-sm rounded-lg transition-colors {pageNum === currentPage ? 'bg-blue-500 text-white' : 'border border-slate-200 hover:bg-slate-50'}"
+                    class="w-8 h-8 text-sm rounded-lg transition-colors cursor-pointer {pageNum === currentPage ? 'bg-blue-500 text-white' : 'border border-slate-200 hover:bg-slate-50'}"
                   >
                     {pageNum}
                   </button>
@@ -253,14 +253,14 @@
               <button
                 onclick={() => goToPage(currentPage + 1)}
                 disabled={currentPage === historyPage.totalPages}
-                class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Next
               </button>
               <button
                 onclick={() => goToPage(historyPage.totalPages)}
                 disabled={currentPage === historyPage.totalPages}
-                class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Last
               </button>

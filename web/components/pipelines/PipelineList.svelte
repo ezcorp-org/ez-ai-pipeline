@@ -52,7 +52,7 @@
       {#each pipelines as pipeline}
         <button
           onclick={() => navigate(`/pipelines/${pipeline.id}`)}
-          class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 text-left hover:shadow-md hover:border-slate-300 transition-all"
+          class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 text-left hover:shadow-md hover:border-slate-300 transition-all cursor-pointer"
         >
           <div class="flex items-start justify-between mb-3">
             <div class="text-2xl">🔧</div>

@@ -8,7 +8,71 @@ import type { CLISessionOptions } from "../src/core/cli-session.ts";
 import { savePipelineResult } from "../src/utils/file.ts";
 import { join } from "path";
 
+const PIPELINES_DIR = join(import.meta.dir, "../pipelines");
 const HISTORY_FILE = join(import.meta.dir, "../outputs/execution-history.json");
+
+// Generate TypeScript code for a pipeline config
+function generatePipelineCode(config: Record<string, unknown>): string {
+  const configJson = JSON.stringify(config, null, 2);
+
+  return `import type { PipelineConfig } from "../src/typings/pipeline.ts";
+
+/**
+ * Auto-generated pipeline by Pipeline Generator
+ * Generated at: ${new Date().toISOString()}
+ */
+
+const config: PipelineConfig = ${configJson};
+
+export default config;
+`;
+}
+
+// Save generated pipeline to pipelines folder
+async function saveGeneratedPipeline(output: Record<string, unknown>): Promise<{ saved: boolean; filename?: string; error?: string }> {
+  try {
+    // Get the pipeline config - prefer refined if available
+    const stage5 = output["stage-5-refine"] as Record<string, unknown> | undefined;
+    const stage3 = output["stage-3-generate"] as Record<string, unknown> | undefined;
+
+    const pipelineConfig = stage5?.refinedPipelineConfig || stage3?.pipelineConfig;
+
+    if (!pipelineConfig || typeof pipelineConfig !== "object") {
+      return { saved: false, error: "No pipeline config found in output" };
+    }
+
+    // Get the filename from stage 6
+    const stage6 = output["stage-6-finalize"] as Record<string, unknown> | undefined;
+    let filename = stage6?.filename as string | undefined;
+
+    // Generate filename from pipeline id if not provided
+    if (!filename) {
+      const pipeline = (pipelineConfig as Record<string, unknown>).pipeline as Record<string, unknown> | undefined;
+      const pipelineId = pipeline?.id as string | undefined;
+      filename = pipelineId ? `${pipelineId}.ts` : `generated-pipeline-${Date.now()}.ts`;
+    }
+
+    // Ensure .ts extension
+    if (!filename.endsWith(".ts")) {
+      filename = filename + ".ts";
+    }
+
+    // Generate the TypeScript code
+    const code = generatePipelineCode(pipelineConfig as Record<string, unknown>);
+
+    // Save to pipelines folder
+    const filepath = join(PIPELINES_DIR, filename);
+    await Bun.write(filepath, code);
+
+    console.log(`✅ Generated pipeline saved to: ${filepath}`);
+
+    return { saved: true, filename };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("Failed to save generated pipeline:", errorMsg);
+    return { saved: false, error: errorMsg };
+  }
+}
 
 // Extract the meaningful final output from pipeline result
 function extractFinalOutput(output: Record<string, unknown>): { type: "text" | "code" | "json"; content: string; label: string } | null {
@@ -319,6 +383,15 @@ class ExecutionManager {
       // Save result to outputs
       await savePipelineResult(result);
 
+      // If this is the pipeline generator, auto-save the generated pipeline
+      let savedPipeline: { saved: boolean; filename?: string; error?: string } | undefined;
+      if (config.pipeline.id === "pipeline-generator-v1" && result.status === "completed" && result.output) {
+        savedPipeline = await saveGeneratedPipeline(result.output as Record<string, unknown>);
+        if (savedPipeline.saved) {
+          console.log(`🎉 Pipeline auto-saved: ${savedPipeline.filename}`);
+        }
+      }
+
       // Save to history
       await this.saveToHistory(execution);
 
@@ -332,6 +405,7 @@ class ExecutionManager {
           summary: result.summary,
           output: result.output,
           error: result.error,
+          savedPipeline: savedPipeline?.saved ? { filename: savedPipeline.filename } : undefined,
         },
       });
     } catch (error) {

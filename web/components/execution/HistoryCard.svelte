@@ -51,7 +51,7 @@
 
 <button
   {onclick}
-  class="w-full text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all group"
+  class="w-full text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all group cursor-pointer"
 >
   <div class="flex items-center gap-4">
     <!-- Status Icon -->

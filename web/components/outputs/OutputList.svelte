@@ -105,7 +105,7 @@
           {#each dateOutputs as output}
             <button
               onclick={() => navigate(`/outputs/${output.filename}`)}
-              class="w-full bg-white rounded-xl p-4 shadow-sm border border-slate-200 text-left hover:shadow-md hover:border-slate-300 transition-all"
+              class="w-full bg-white rounded-xl p-4 shadow-sm border border-slate-200 text-left hover:shadow-md hover:border-slate-300 transition-all cursor-pointer"
             >
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-3">

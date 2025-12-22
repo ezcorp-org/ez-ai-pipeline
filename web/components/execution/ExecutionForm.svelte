@@ -234,7 +234,7 @@
           <button
             onclick={() => executionMode = 'api'}
             disabled={!config?.hasApiKey || status === 'running'}
-            class="px-3 py-1.5 text-sm rounded-lg transition-colors {executionMode === 'api' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'} disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer {executionMode === 'api' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'} disabled:opacity-50 disabled:cursor-not-allowed"
           >
             API
             {#if config?.hasApiKey}
@@ -244,7 +244,7 @@
           <button
             onclick={() => executionMode = 'cli'}
             disabled={!config?.cliTools.claude.available && !config?.cliTools.opencode.available && !config?.cliTools.aider.available || status === 'running'}
-            class="px-3 py-1.5 text-sm rounded-lg transition-colors {executionMode === 'cli' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'} disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-3 py-1.5 text-sm rounded-lg transition-colors cursor-pointer {executionMode === 'cli' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'} disabled:opacity-50 disabled:cursor-not-allowed"
           >
             CLI Tool
           </button>
@@ -301,14 +301,14 @@
             <button
               onclick={cancelExecution}
               disabled={cancelRequested}
-              class="px-4 py-2 text-sm bg-red-100 text-red-600 rounded-lg hover:bg-red-200 disabled:opacity-50 transition-colors"
+              class="px-4 py-2 text-sm bg-red-100 text-red-600 rounded-lg hover:bg-red-200 disabled:opacity-50 transition-colors cursor-pointer"
             >
               {cancelRequested ? 'Cancelling...' : 'Cancel'}
             </button>
           {:else if status === 'completed' || status === 'failed'}
             <button
               onclick={reset}
-              class="px-4 py-2 text-sm bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
+              class="px-4 py-2 text-sm bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors cursor-pointer"
             >
               New Run
             </button>
@@ -316,7 +316,7 @@
           <button
             onclick={runPipeline}
             disabled={status === 'running' || !input.trim() || !canExecute()}
-            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center gap-2"
           >
             {#if status === 'running'}
               <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -343,7 +343,7 @@
             <div class="text-sm mt-1">{error}</div>
             <button
               onclick={runPipeline}
-              class="mt-2 text-sm text-red-700 hover:text-red-800 underline"
+              class="mt-2 text-sm text-red-700 hover:text-red-800 underline cursor-pointer"
             >
               Retry
             </button>
