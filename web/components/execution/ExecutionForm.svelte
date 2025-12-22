@@ -1,7 +1,6 @@
 <script lang="ts">
   import ExecutionProgress from './ExecutionProgress.svelte';
   import ExecutionResult from './ExecutionResult.svelte';
-  import ApiKeyWarning from './ApiKeyWarning.svelte';
   import ExecutionHistory from './ExecutionHistory.svelte';
 
   interface ExecutionResultData {
@@ -27,6 +26,21 @@
     inputPreview: string;
   }
 
+  interface CLIToolStatus {
+    available: boolean;
+    version?: string;
+    error?: string;
+  }
+
+  interface ConfigStatus {
+    hasApiKey: boolean;
+    cliTools: {
+      claude: CLIToolStatus;
+      opencode: CLIToolStatus;
+      aider: CLIToolStatus;
+    };
+  }
+
   let { pipelineId, pipelineName, stageCount }: {
     pipelineId: string;
     pipelineName?: string;
@@ -38,19 +52,46 @@
   let executionId = $state<string | null>(null);
   let error = $state<string | null>(null);
   let result = $state<ExecutionResultData | null>(null);
-  let apiKeyStatus = $state<'checking' | 'missing' | 'present'>('checking');
+  let configStatus = $state<'checking' | 'loaded'>('checking');
+  let config = $state<ConfigStatus | null>(null);
+  let executionMode = $state<'api' | 'cli'>('api');
+  let selectedCliTool = $state<'claude' | 'opencode' | 'aider'>('claude');
   let cancelRequested = $state(false);
 
-  // Check API key status on mount
+  // Check config status on mount
   $effect(() => {
     fetch('/api/config/status')
       .then(r => r.json())
-      .then(data => {
-        apiKeyStatus = data.hasApiKey ? 'present' : 'missing';
+      .then((data: ConfigStatus) => {
+        config = data;
+        configStatus = 'loaded';
+
+        // Auto-select execution mode based on what's available
+        if (data.hasApiKey) {
+          executionMode = 'api';
+        } else {
+          executionMode = 'cli';
+          // Select first available CLI tool
+          if (data.cliTools.claude.available) {
+            selectedCliTool = 'claude';
+          } else if (data.cliTools.opencode.available) {
+            selectedCliTool = 'opencode';
+          } else if (data.cliTools.aider.available) {
+            selectedCliTool = 'aider';
+          }
+        }
       })
       .catch(() => {
-        apiKeyStatus = 'present'; // Assume present if check fails
+        configStatus = 'loaded';
+        config = { hasApiKey: false, cliTools: { claude: { available: false }, opencode: { available: false }, aider: { available: false } } };
       });
+  });
+
+  // Check if execution is possible
+  let canExecute = $derived(() => {
+    if (!config) return false;
+    if (executionMode === 'api') return config.hasApiKey;
+    return config.cliTools[selectedCliTool]?.available ?? false;
   });
 
   // Keyboard shortcuts
@@ -58,7 +99,7 @@
     function handleKeydown(e: KeyboardEvent) {
       // Ctrl+Enter to run
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        if (status !== 'running' && input.trim() && apiKeyStatus === 'present') {
+        if (status !== 'running' && input.trim() && canExecute()) {
           e.preventDefault();
           runPipeline();
         }
@@ -75,7 +116,7 @@
   });
 
   async function runPipeline() {
-    if (!input.trim()) return;
+    if (!input.trim() || !canExecute()) return;
 
     status = 'running';
     error = null;
@@ -83,10 +124,19 @@
     cancelRequested = false;
 
     try {
+      const body: Record<string, unknown> = {
+        input: input.trim(),
+        executionMode,
+      };
+
+      if (executionMode === 'cli') {
+        body.cliTool = selectedCliTool;
+      }
+
       const response = await fetch(`/api/pipelines/${pipelineId}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input: input.trim() }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -151,21 +201,84 @@
   }
 </script>
 
-{#if apiKeyStatus === 'checking'}
+{#if configStatus === 'checking'}
   <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-6">
     <div class="flex items-center justify-center py-8">
       <div class="text-slate-500">Checking configuration...</div>
     </div>
   </div>
-{:else if apiKeyStatus === 'missing'}
-  <div class="mb-6">
-    <ApiKeyWarning />
+{:else if !canExecute()}
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-6">
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+      <h3 class="font-semibold text-amber-800 mb-2">No Execution Method Available</h3>
+      <p class="text-amber-700 text-sm mb-3">
+        To run pipelines, you need either an Anthropic API key or a CLI tool installed.
+      </p>
+      <div class="text-sm text-amber-700 space-y-2">
+        <p><strong>Option 1:</strong> Set ANTHROPIC_API_KEY environment variable</p>
+        <p><strong>Option 2:</strong> Install Claude Code: <code class="bg-amber-100 px-1.5 py-0.5 rounded">npm install -g @anthropic-ai/claude-code</code></p>
+      </div>
+    </div>
   </div>
 {:else}
   <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-6">
     <h2 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
       <span class="text-xl">&#9654;</span> Run Pipeline
     </h2>
+
+    <!-- Execution Mode Selector -->
+    <div class="mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+      <div class="flex items-center gap-4 flex-wrap">
+        <span class="text-sm font-medium text-slate-600">Execution Mode:</span>
+        <div class="flex gap-2">
+          <button
+            onclick={() => executionMode = 'api'}
+            disabled={!config?.hasApiKey || status === 'running'}
+            class="px-3 py-1.5 text-sm rounded-lg transition-colors {executionMode === 'api' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'} disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            API
+            {#if config?.hasApiKey}
+              <span class="ml-1 text-xs opacity-75">(ready)</span>
+            {/if}
+          </button>
+          <button
+            onclick={() => executionMode = 'cli'}
+            disabled={!config?.cliTools.claude.available && !config?.cliTools.opencode.available && !config?.cliTools.aider.available || status === 'running'}
+            class="px-3 py-1.5 text-sm rounded-lg transition-colors {executionMode === 'cli' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50'} disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            CLI Tool
+          </button>
+        </div>
+
+        {#if executionMode === 'cli'}
+          <div class="flex gap-2 ml-4">
+            <span class="text-sm text-slate-500">Tool:</span>
+            <select
+              bind:value={selectedCliTool}
+              disabled={status === 'running'}
+              class="text-sm border border-slate-300 rounded-lg px-2 py-1 bg-white disabled:opacity-50"
+            >
+              {#if config?.cliTools.claude.available}
+                <option value="claude">Claude Code {config.cliTools.claude.version ? `(${config.cliTools.claude.version})` : ''}</option>
+              {/if}
+              {#if config?.cliTools.opencode.available}
+                <option value="opencode">OpenCode {config.cliTools.opencode.version ? `(${config.cliTools.opencode.version})` : ''}</option>
+              {/if}
+              {#if config?.cliTools.aider.available}
+                <option value="aider">Aider {config.cliTools.aider.version ? `(${config.cliTools.aider.version})` : ''}</option>
+              {/if}
+            </select>
+          </div>
+        {/if}
+      </div>
+      <p class="text-xs text-slate-500 mt-2">
+        {#if executionMode === 'api'}
+          Uses your Anthropic API key to call Claude directly.
+        {:else}
+          Uses {selectedCliTool === 'claude' ? 'Claude Code' : selectedCliTool === 'opencode' ? 'OpenCode' : 'Aider'} CLI for execution. No API key required.
+        {/if}
+      </p>
+    </div>
 
     <div class="mb-4">
       <label for="prompt-input" class="block text-sm font-medium text-slate-600 mb-2">
@@ -202,7 +315,7 @@
           {/if}
           <button
             onclick={runPipeline}
-            disabled={status === 'running' || !input.trim()}
+            disabled={status === 'running' || !input.trim() || !canExecute()}
             class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             {#if status === 'running'}

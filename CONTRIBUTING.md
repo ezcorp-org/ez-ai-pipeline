@@ -5,7 +5,7 @@ Thank you for your interest in contributing to EZ AI Pipeline! This document pro
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/ez-ai-pipeline.git`
+2. Clone your fork: `git clone https://github.com/ezcorp-org/ez-ai-pipeline.git`
 3. Install dependencies: `bun install`
 4. Create a branch: `git checkout -b feature/your-feature-name`
 

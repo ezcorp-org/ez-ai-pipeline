@@ -92,6 +92,17 @@ https://svelte.dev/e/async_derived_orphan`);
     throw new Error(`https://svelte.dev/e/async_derived_orphan`);
   }
 }
+function bind_invalid_checkbox_value() {
+  if (true_default) {
+    const error = new Error(`bind_invalid_checkbox_value
+Using \`bind:value\` together with a checkbox input is not allowed. Use \`bind:checked\` instead
+https://svelte.dev/e/bind_invalid_checkbox_value`);
+    error.name = "Svelte error";
+    throw error;
+  } else {
+    throw new Error(`https://svelte.dev/e/bind_invalid_checkbox_value`);
+  }
+}
 function derived_references_self() {
   if (true_default) {
     const error = new Error(`derived_references_self
@@ -158,6 +169,17 @@ https://svelte.dev/e/hydration_failed`);
     throw new Error(`https://svelte.dev/e/hydration_failed`);
   }
 }
+function props_invalid_value(key) {
+  if (true_default) {
+    const error = new Error(`props_invalid_value
+Cannot do \`bind:${key}={undefined}\` when \`${key}\` has a fallback value
+https://svelte.dev/e/props_invalid_value`);
+    error.name = "Svelte error";
+    throw error;
+  } else {
+    throw new Error(`https://svelte.dev/e/props_invalid_value`);
+  }
+}
 function rune_outside_svelte(rune) {
   if (true_default) {
     const error = new Error(`rune_outside_svelte
@@ -220,6 +242,7 @@ var EACH_INDEX_REACTIVE = 1 << 1;
 var EACH_IS_CONTROLLED = 1 << 2;
 var EACH_IS_ANIMATED = 1 << 3;
 var EACH_ITEM_IMMUTABLE = 1 << 4;
+var PROPS_IS_IMMUTABLE = 1;
 var PROPS_IS_RUNES = 1 << 1;
 var PROPS_IS_UPDATED = 1 << 2;
 var PROPS_IS_BINDABLE = 1 << 3;
@@ -244,10 +267,10 @@ var NAMESPACE_HTML = "http://www.w3.org/1999/xhtml";
 // node_modules/svelte/src/internal/client/warnings.js
 var bold = "font-weight: bold";
 var normal = "font-weight: normal";
-function await_waterfall(name, location) {
+function await_waterfall(name, location2) {
   if (true_default) {
     console.warn(`%c[svelte] await_waterfall
-%cAn async derived, \`${name}\` (${location}) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
+%cAn async derived, \`${name}\` (${location2}) was not read immediately after it resolved. This often indicates an unnecessary waterfall, which can slow down your app
 https://svelte.dev/e/await_waterfall`, bold, normal);
   } else {
     console.warn(`https://svelte.dev/e/await_waterfall`);
@@ -262,10 +285,19 @@ https://svelte.dev/e/hydration_attribute_changed`, bold, normal);
     console.warn(`https://svelte.dev/e/hydration_attribute_changed`);
   }
 }
-function hydration_mismatch(location) {
+function hydration_html_changed(location2) {
+  if (true_default) {
+    console.warn(`%c[svelte] hydration_html_changed
+%c${location2 ? `The value of an \`{@html ...}\` block ${location2} changed between server and client renders. The client value will be ignored in favour of the server value` : "The value of an `{@html ...}` block changed between server and client renders. The client value will be ignored in favour of the server value"}
+https://svelte.dev/e/hydration_html_changed`, bold, normal);
+  } else {
+    console.warn(`https://svelte.dev/e/hydration_html_changed`);
+  }
+}
+function hydration_mismatch(location2) {
   if (true_default) {
     console.warn(`%c[svelte] hydration_mismatch
-%c${location ? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location}` : "Hydration failed because the initial UI does not match what was rendered on the server"}
+%c${location2 ? `Hydration failed because the initial UI does not match what was rendered on the server. The error occurred near ${location2}` : "Hydration failed because the initial UI does not match what was rendered on the server"}
 https://svelte.dev/e/hydration_mismatch`, bold, normal);
   } else {
     console.warn(`https://svelte.dev/e/hydration_mismatch`);
@@ -1465,7 +1497,7 @@ function derived(fn) {
   }
   return signal;
 }
-function async_derived(fn, location) {
+function async_derived(fn, location2) {
   let parent = active_effect;
   if (parent === null) {
     async_derived_orphan();
@@ -1521,11 +1553,11 @@ function async_derived(fn, location) {
             break;
           d2.reject(STALE_REACTION);
         }
-        if (true_default && location !== undefined) {
+        if (true_default && location2 !== undefined) {
           recent_async_deriveds.add(signal);
           setTimeout(() => {
             if (recent_async_deriveds.has(signal)) {
-              await_waterfall(signal.label, location);
+              await_waterfall(signal.label, location2);
               recent_async_deriveds.delete(signal);
             }
           });
@@ -2233,6 +2265,11 @@ function should_defer_append() {
 }
 
 // node_modules/svelte/src/internal/client/dom/elements/misc.js
+function remove_textarea_child(dom) {
+  if (hydrating && get_first_child(dom) !== null) {
+    clear_text_content(dom);
+  }
+}
 var listening_to_form_reset = false;
 function add_form_reset_listener() {
   if (!listening_to_form_reset) {
@@ -2854,6 +2891,16 @@ function update_effect(effect2) {
     }
   }
 }
+async function tick() {
+  if (async_mode_flag) {
+    return new Promise((f) => {
+      requestAnimationFrame(() => f());
+      setTimeout(() => f());
+    });
+  }
+  await Promise.resolve();
+  flushSync();
+}
 function get(signal) {
   var flags2 = signal.f;
   var is_derived = (flags2 & DERIVED) !== 0;
@@ -2975,6 +3022,15 @@ function set_signal_status(signal, status) {
   signal.f = signal.f & STATUS_MASK | status;
 }
 // node_modules/svelte/src/utils.js
+var regex_return_characters = /\r/g;
+function hash(str) {
+  str = str.replace(regex_return_characters, "");
+  let hash2 = 5381;
+  let i = str.length;
+  while (i--)
+    hash2 = (hash2 << 5) - hash2 ^ str.charCodeAt(i);
+  return (hash2 >>> 0).toString(36);
+}
 var DOM_BOOLEAN_ATTRIBUTES = [
   "allowfullscreen",
   "async",
@@ -3049,6 +3105,9 @@ var RUNES = [
   "$inspect.trace",
   "$host"
 ];
+function sanitize_location(location2) {
+  return location2?.replace(/\//g, "/​");
+}
 // node_modules/svelte/src/internal/client/dev/css.js
 var all_styles = new Map;
 // node_modules/svelte/src/internal/client/dom/elements/events.js
@@ -3176,6 +3235,42 @@ function from_html(content, flags2) {
     }
     return clone;
   };
+}
+function from_namespace(content, flags2, ns = "svg") {
+  var has_start = !content.startsWith("<!>");
+  var is_fragment = (flags2 & TEMPLATE_FRAGMENT) !== 0;
+  var wrapped = `<${ns}>${has_start ? content : "<!>" + content}</${ns}>`;
+  var node;
+  return () => {
+    if (hydrating) {
+      assign_nodes(hydrate_node, null);
+      return hydrate_node;
+    }
+    if (!node) {
+      var fragment = create_fragment_from_html(wrapped);
+      var root = get_first_child(fragment);
+      if (is_fragment) {
+        node = document.createDocumentFragment();
+        while (get_first_child(root)) {
+          node.appendChild(get_first_child(root));
+        }
+      } else {
+        node = get_first_child(root);
+      }
+    }
+    var clone = node.cloneNode(true);
+    if (is_fragment) {
+      var start = get_first_child(clone);
+      var end = clone.lastChild;
+      assign_nodes(start, end);
+    } else {
+      assign_nodes(clone, clone);
+    }
+    return clone;
+  };
+}
+function from_svg(content, flags2) {
+  return from_namespace(content, flags2, "svg");
 }
 function text(value = "") {
   if (!hydrating) {
@@ -3885,6 +3980,73 @@ function link(state2, prev, next2) {
     next2.prev = prev;
   }
 }
+// node_modules/svelte/src/internal/client/dom/blocks/html.js
+function check_hash(element, server_hash, value) {
+  if (!server_hash || server_hash === hash(String(value ?? "")))
+    return;
+  let location2;
+  const loc = element.__svelte_meta?.loc;
+  if (loc) {
+    location2 = `near ${loc.file}:${loc.line}:${loc.column}`;
+  } else if (dev_current_component_function?.[FILENAME]) {
+    location2 = `in ${dev_current_component_function[FILENAME]}`;
+  }
+  hydration_html_changed(sanitize_location(location2));
+}
+function html(node, get_value, svg = false, mathml = false, skip_warning = false) {
+  var anchor = node;
+  var value = "";
+  template_effect(() => {
+    var effect2 = active_effect;
+    if (value === (value = get_value() ?? "")) {
+      if (hydrating)
+        hydrate_next();
+      return;
+    }
+    if (effect2.nodes !== null) {
+      remove_effect_dom(effect2.nodes.start, effect2.nodes.end);
+      effect2.nodes = null;
+    }
+    if (value === "")
+      return;
+    if (hydrating) {
+      var hash2 = hydrate_node.data;
+      var next2 = hydrate_next();
+      var last = next2;
+      while (next2 !== null && (next2.nodeType !== COMMENT_NODE || next2.data !== "")) {
+        last = next2;
+        next2 = get_next_sibling(next2);
+      }
+      if (next2 === null) {
+        hydration_mismatch();
+        throw HYDRATION_ERROR;
+      }
+      if (true_default && !skip_warning) {
+        check_hash(next2.parentNode, hash2, value);
+      }
+      assign_nodes(hydrate_node, last);
+      anchor = set_hydrate_node(next2);
+      return;
+    }
+    var html2 = value + "";
+    if (svg)
+      html2 = `<svg>${html2}</svg>`;
+    else if (mathml)
+      html2 = `<math>${html2}</math>`;
+    var node2 = create_fragment_from_html(html2);
+    if (svg || mathml) {
+      node2 = get_first_child(node2);
+    }
+    assign_nodes(get_first_child(node2), node2.lastChild);
+    if (svg || mathml) {
+      while (get_first_child(node2)) {
+        anchor.before(get_first_child(node2));
+      }
+    } else {
+      anchor.before(node2);
+    }
+  });
+}
 // node_modules/svelte/src/internal/client/timing.js
 var now = true_default ? () => performance.now() : () => Date.now();
 var raf = {
@@ -3926,6 +4088,99 @@ function to_class(value, hash2, directives) {
   }
   return classname === "" ? null : classname;
 }
+function append_styles(styles, important = false) {
+  var separator = important ? " !important;" : ";";
+  var css = "";
+  for (var key in styles) {
+    var value = styles[key];
+    if (value != null && value !== "") {
+      css += " " + key + ": " + value + separator;
+    }
+  }
+  return css;
+}
+function to_css_name(name) {
+  if (name[0] !== "-" || name[1] !== "-") {
+    return name.toLowerCase();
+  }
+  return name;
+}
+function to_style(value, styles) {
+  if (styles) {
+    var new_style = "";
+    var normal_styles;
+    var important_styles;
+    if (Array.isArray(styles)) {
+      normal_styles = styles[0];
+      important_styles = styles[1];
+    } else {
+      normal_styles = styles;
+    }
+    if (value) {
+      value = String(value).replaceAll(/\s*\/\*.*?\*\/\s*/g, "").trim();
+      var in_str = false;
+      var in_apo = 0;
+      var in_comment = false;
+      var reserved_names = [];
+      if (normal_styles) {
+        reserved_names.push(...Object.keys(normal_styles).map(to_css_name));
+      }
+      if (important_styles) {
+        reserved_names.push(...Object.keys(important_styles).map(to_css_name));
+      }
+      var start_index = 0;
+      var name_index = -1;
+      const len = value.length;
+      for (var i = 0;i < len; i++) {
+        var c = value[i];
+        if (in_comment) {
+          if (c === "/" && value[i - 1] === "*") {
+            in_comment = false;
+          }
+        } else if (in_str) {
+          if (in_str === c) {
+            in_str = false;
+          }
+        } else if (c === "/" && value[i + 1] === "*") {
+          in_comment = true;
+        } else if (c === '"' || c === "'") {
+          in_str = c;
+        } else if (c === "(") {
+          in_apo++;
+        } else if (c === ")") {
+          in_apo--;
+        }
+        if (!in_comment && in_str === false && in_apo === 0) {
+          if (c === ":" && name_index === -1) {
+            name_index = i;
+          } else if (c === ";" || i === len - 1) {
+            if (name_index !== -1) {
+              var name = to_css_name(value.substring(start_index, name_index).trim());
+              if (!reserved_names.includes(name)) {
+                if (c !== ";") {
+                  i++;
+                }
+                var property = value.substring(start_index, i).trim();
+                new_style += " " + property + ";";
+              }
+            }
+            start_index = i + 1;
+            name_index = -1;
+          }
+        }
+      }
+    }
+    if (normal_styles) {
+      new_style += append_styles(normal_styles);
+    }
+    if (important_styles) {
+      new_style += append_styles(important_styles, true);
+    }
+    new_style = new_style.trim();
+    return new_style === "" ? null : new_style;
+  }
+  return value == null ? null : String(value);
+}
 
 // node_modules/svelte/src/internal/client/dom/elements/class.js
 function set_class(dom, is_html, value, hash2, prev_classes, next_classes) {
@@ -3951,6 +4206,42 @@ function set_class(dom, is_html, value, hash2, prev_classes, next_classes) {
     }
   }
   return next_classes;
+}
+
+// node_modules/svelte/src/internal/client/dom/elements/style.js
+function update_styles(dom, prev = {}, next2, priority) {
+  for (var key in next2) {
+    var value = next2[key];
+    if (prev[key] !== value) {
+      if (next2[key] == null) {
+        dom.style.removeProperty(key);
+      } else {
+        dom.style.setProperty(key, value, priority);
+      }
+    }
+  }
+}
+function set_style(dom, value, prev_styles, next_styles) {
+  var prev = dom.__style;
+  if (hydrating || prev !== value) {
+    var next_style_attr = to_style(value, next_styles);
+    if (!hydrating || next_style_attr !== dom.getAttribute("style")) {
+      if (next_style_attr == null) {
+        dom.removeAttribute("style");
+      } else {
+        dom.style.cssText = next_style_attr;
+      }
+    }
+    dom.__style = value;
+  } else if (next_styles) {
+    if (Array.isArray(next_styles)) {
+      update_styles(dom, prev_styles?.[0], next_styles[0]);
+      update_styles(dom, prev_styles?.[1], next_styles[1], "important");
+    } else {
+      update_styles(dom, prev_styles, next_styles);
+    }
+  }
+  return next_styles;
 }
 
 // node_modules/svelte/src/internal/client/dom/elements/bindings/select.js
@@ -4117,7 +4408,72 @@ function srcset_url_equal(element, srcset) {
   return urls.length === element_urls.length && urls.every(([url, width], i) => width === element_urls[i][1] && (src_url_equal(element_urls[i][0], url) || src_url_equal(url, element_urls[i][0])));
 }
 // node_modules/svelte/src/internal/client/dom/elements/bindings/input.js
+function bind_value(input, get2, set2 = get2) {
+  var batches2 = new WeakSet;
+  listen_to_event_and_reset_event(input, "input", async (is_reset) => {
+    if (true_default && input.type === "checkbox") {
+      bind_invalid_checkbox_value();
+    }
+    var value = is_reset ? input.defaultValue : input.value;
+    value = is_numberlike_input(input) ? to_number(value) : value;
+    set2(value);
+    if (current_batch !== null) {
+      batches2.add(current_batch);
+    }
+    await tick();
+    if (value !== (value = get2())) {
+      var start = input.selectionStart;
+      var end = input.selectionEnd;
+      var length = input.value.length;
+      input.value = value ?? "";
+      if (end !== null) {
+        var new_length = input.value.length;
+        if (start === end && end === length && new_length > length) {
+          input.selectionStart = new_length;
+          input.selectionEnd = new_length;
+        } else {
+          input.selectionStart = start;
+          input.selectionEnd = Math.min(end, new_length);
+        }
+      }
+    }
+  });
+  if (hydrating && input.defaultValue !== input.value || untrack(get2) == null && input.value) {
+    set2(is_numberlike_input(input) ? to_number(input.value) : input.value);
+    if (current_batch !== null) {
+      batches2.add(current_batch);
+    }
+  }
+  render_effect(() => {
+    if (true_default && input.type === "checkbox") {
+      bind_invalid_checkbox_value();
+    }
+    var value = get2();
+    if (input === document.activeElement) {
+      var batch = previous_batch ?? current_batch;
+      if (batches2.has(batch)) {
+        return;
+      }
+    }
+    if (is_numberlike_input(input) && value === to_number(input.value)) {
+      return;
+    }
+    if (input.type === "date" && !value && !input.value) {
+      return;
+    }
+    if (value !== input.value) {
+      input.value = value ?? "";
+    }
+  });
+}
 var pending = new Set;
+function is_numberlike_input(input) {
+  var type = input.type;
+  return type === "number" || type === "range";
+}
+function to_number(value) {
+  return value === "" ? null : +value;
+}
 // node_modules/svelte/src/internal/client/dom/elements/bindings/size.js
 class ResizeObserverSingleton {
   #listeners = new WeakMap;
@@ -4153,7 +4509,112 @@ class ResizeObserverSingleton {
   }
 }
 // node_modules/svelte/src/internal/client/reactivity/store.js
+var is_store_binding = false;
 var IS_UNMOUNTED = Symbol();
+function capture_store_binding(fn) {
+  var previous_is_store_binding = is_store_binding;
+  try {
+    is_store_binding = false;
+    return [fn(), is_store_binding];
+  } finally {
+    is_store_binding = previous_is_store_binding;
+  }
+}
+
+// node_modules/svelte/src/internal/client/reactivity/props.js
+function prop(props, key, flags2, fallback) {
+  var runes = !legacy_mode_flag || (flags2 & PROPS_IS_RUNES) !== 0;
+  var bindable = (flags2 & PROPS_IS_BINDABLE) !== 0;
+  var lazy = (flags2 & PROPS_IS_LAZY_INITIAL) !== 0;
+  var fallback_value = fallback;
+  var fallback_dirty = true;
+  var get_fallback = () => {
+    if (fallback_dirty) {
+      fallback_dirty = false;
+      fallback_value = lazy ? untrack(fallback) : fallback;
+    }
+    return fallback_value;
+  };
+  var setter;
+  if (bindable) {
+    var is_entry_props = STATE_SYMBOL in props || LEGACY_PROPS in props;
+    setter = get_descriptor(props, key)?.set ?? (is_entry_props && key in props ? (v) => props[key] = v : undefined);
+  }
+  var initial_value;
+  var is_store_sub = false;
+  if (bindable) {
+    [initial_value, is_store_sub] = capture_store_binding(() => props[key]);
+  } else {
+    initial_value = props[key];
+  }
+  if (initial_value === undefined && fallback !== undefined) {
+    initial_value = get_fallback();
+    if (setter) {
+      if (runes)
+        props_invalid_value(key);
+      setter(initial_value);
+    }
+  }
+  var getter;
+  if (runes) {
+    getter = () => {
+      var value = props[key];
+      if (value === undefined)
+        return get_fallback();
+      fallback_dirty = true;
+      return value;
+    };
+  } else {
+    getter = () => {
+      var value = props[key];
+      if (value !== undefined) {
+        fallback_value = undefined;
+      }
+      return value === undefined ? fallback_value : value;
+    };
+  }
+  if (runes && (flags2 & PROPS_IS_UPDATED) === 0) {
+    return getter;
+  }
+  if (setter) {
+    var legacy_parent = props.$$legacy;
+    return function(value, mutation) {
+      if (arguments.length > 0) {
+        if (!runes || !mutation || legacy_parent || is_store_sub) {
+          setter(mutation ? getter() : value);
+        }
+        return value;
+      }
+      return getter();
+    };
+  }
+  var overridden = false;
+  var d = ((flags2 & PROPS_IS_IMMUTABLE) !== 0 ? derived : derived_safe_equal)(() => {
+    overridden = false;
+    return getter();
+  });
+  if (true_default) {
+    d.label = key;
+  }
+  if (bindable)
+    get(d);
+  var parent_effect = active_effect;
+  return function(value, mutation) {
+    if (arguments.length > 0) {
+      const new_value = mutation ? get(d) : runes && bindable ? proxy(value) : value;
+      set(d, new_value);
+      overridden = true;
+      if (fallback_value !== undefined) {
+        fallback_value = new_value;
+      }
+      return value;
+    }
+    if (is_destroying_effect && overridden || (parent_effect.f & DESTROYED) !== 0) {
+      return d.v;
+    }
+    return get(d);
+  };
+}
 // node_modules/svelte/src/legacy/legacy-client.js
 function createClassComponent(options) {
   return new Svelte4Component(options);
@@ -4169,18 +4630,18 @@ class Svelte4Component {
       return s;
     };
     const props = new Proxy({ ...options.props || {}, $$events: {} }, {
-      get(target, prop) {
-        return get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
+      get(target, prop2) {
+        return get(sources.get(prop2) ?? add_source(prop2, Reflect.get(target, prop2)));
       },
-      has(target, prop) {
-        if (prop === LEGACY_PROPS)
+      has(target, prop2) {
+        if (prop2 === LEGACY_PROPS)
           return true;
-        get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
-        return Reflect.has(target, prop);
+        get(sources.get(prop2) ?? add_source(prop2, Reflect.get(target, prop2)));
+        return Reflect.has(target, prop2);
       },
-      set(target, prop, value) {
-        set(sources.get(prop) ?? add_source(prop, value), value);
-        return Reflect.set(target, prop, value);
+      set(target, prop2, value) {
+        set(sources.get(prop2) ?? add_source(prop2, value), value);
+        return Reflect.set(target, prop2, value);
       }
     });
     this.#instance = (options.hydrate ? hydrate : mount)(options.component, {
@@ -4368,10 +4829,10 @@ if (typeof HTMLElement === "function") {
     }
   };
 }
-function get_custom_element_value(prop, value, props_definition, transform) {
-  const type = props_definition[prop]?.type;
+function get_custom_element_value(prop2, value, props_definition, transform) {
+  const type = props_definition[prop2]?.type;
   value = type === "Boolean" && typeof value !== "boolean" ? value != null : value;
-  if (!transform || !props_definition[prop]) {
+  if (!transform || !props_definition[prop2]) {
     return value;
   } else if (transform === "toAttribute") {
     switch (type) {
@@ -4442,10 +4903,14 @@ if (typeof window !== "undefined") {
 }
 
 // web/components/Sidebar.svelte
+var root_2 = from_html(`
+          <span class="ml-auto bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full min-w-[1.25rem] text-center"> </span>
+        `, 1);
 var root_1 = from_html(`
       <a>
         <span class="text-lg"> </span>
-        <span> </span>
+        <span class="flex-1"> </span>
+        <!>
       </a>
     `, 1);
 var root = from_html(`
@@ -4469,9 +4934,16 @@ var root = from_html(`
 </aside>`, 1);
 function Sidebar($$anchor, $$props) {
   push($$props, true);
+  let runningCount = state(0);
   const navItems = [
     { path: "/", label: "Dashboard", icon: "\uD83D\uDCCA" },
     { path: "/pipelines", label: "Pipelines", icon: "\uD83D\uDD27" },
+    {
+      path: "/running",
+      label: "Running",
+      icon: "▶️",
+      showCount: true
+    },
     { path: "/outputs", label: "Outputs", icon: "\uD83D\uDCC4" }
   ];
   function isActive(path) {
@@ -4483,6 +4955,20 @@ function Sidebar($$anchor, $$props) {
     e.preventDefault();
     $$props.navigate(path);
   }
+  async function fetchRunningCount() {
+    try {
+      const res = await fetch("/api/executions/running");
+      if (res.ok) {
+        const data = await res.json();
+        set(runningCount, data.count, true);
+      }
+    } catch {}
+  }
+  user_effect(() => {
+    fetchRunningCount();
+    const interval = setInterval(fetchRunningCount, 2000);
+    return () => clearInterval(interval);
+  });
   next();
   var fragment = root();
   var aside = sibling(first_child(fragment));
@@ -4499,6 +4985,24 @@ function Sidebar($$anchor, $$props) {
     var span_1 = sibling(span, 2);
     var text_1 = child(span_1, true);
     reset(span_1);
+    var node_1 = sibling(span_1, 2);
+    {
+      var consequent = ($$anchor3) => {
+        var fragment_2 = root_2();
+        var span_2 = sibling(first_child(fragment_2));
+        var text_2 = child(span_2);
+        reset(span_2);
+        next();
+        template_effect(() => set_text(text_2, `
+            ${get(runningCount) ?? ""}
+          `));
+        append($$anchor3, fragment_2);
+      };
+      if_block(node_1, ($$render) => {
+        if (get(item).showCount && get(runningCount) > 0)
+          $$render(consequent);
+      });
+    }
     next();
     reset(a);
     next();
@@ -4550,7 +5054,7 @@ var root_5 = from_html(`
 var root_6 = from_html(`
             <div class="p-4 text-slate-500 text-sm">No outputs found</div>
           `, 1);
-var root_2 = from_html(`
+var root_22 = from_html(`
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
       <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
         <div class="text-3xl font-bold text-blue-600"> </div>
@@ -4642,7 +5146,7 @@ function Dashboard($$anchor, $$props) {
       append($$anchor2, fragment_1);
     };
     var alternate = ($$anchor2) => {
-      var fragment_2 = root_2();
+      var fragment_2 = root_22();
       var div_1 = sibling(first_child(fragment_2));
       var div_2 = sibling(child(div_1));
       var div_3 = sibling(child(div_2));
@@ -4960,43 +5464,1833 @@ if (undefined) {}
 var PipelineList_default = PipelineList;
 delegate(["click"]);
 
-// web/components/pipelines/PipelineDetail.svelte
+// web/components/execution/StageStatus.svelte
 var root_14 = from_html(`
+        <span class="text-sm font-medium"> </span>
+      `, 1);
+var root_33 = from_svg(`
+        <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      `, 1);
+var root_53 = from_svg(`
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      `, 1);
+var root_7 = from_svg(`
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+        </svg>
+      `, 1);
+var root_9 = from_svg(`
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      `, 1);
+var root_10 = from_html(`
+        <div class="text-xs text-red-600 mt-1 truncate"> </div>
+      `, 1);
+var root_122 = from_html(`
+        <div class="text-xs text-blue-600 mt-1">Running...</div>
+      `, 1);
+var root_132 = from_html(`
+        <span class="text-blue-600">...</span>
+      `, 1);
+var root_15 = from_html(`
+      <div class="p-1.5 shrink-0">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </div>
+    `, 1);
+var root_16 = from_html(`
+    <div class="border-t border-current/10 p-4 bg-white/80">
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-xs font-medium text-slate-500">Stage Output</div>
+        <div class="text-xs text-slate-400"> </div>
+      </div>
+      <div class="text-sm text-slate-700 max-h-96 overflow-y-auto bg-slate-50 rounded-lg p-4 prose prose-sm prose-slate max-w-none">
+        <!>
+      </div>
+    </div>
+  `, 1);
+var root4 = from_html(`
+
+<div>
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="flex items-center gap-3 p-3">
+    <!-- Status Icon -->
+    <div>
+      <!>
+    </div>
+
+    <!-- Stage Info -->
+    <div class="flex-1 min-w-0">
+      <div class="font-medium text-slate-800 truncate"> </div>
+      <!>
+    </div>
+
+    <!-- Duration -->
+    <div class="text-sm text-slate-600 w-16 text-right shrink-0">
+      <!>
+    </div>
+
+    <!-- Cost -->
+    <div class="text-sm text-slate-600 w-20 text-right shrink-0"> </div>
+
+    <!-- Output Toggle Indicator -->
+    <!>
+  </div>
+
+  <!-- Expandable Output Section with Syntax Highlighting -->
+  <!>
+</div>`, 1);
+function StageStatus($$anchor, $$props) {
+  push($$props, true);
+  let expanded = prop($$props, "expanded", 3, false);
+  const statusColors = {
+    pending: "text-slate-400 bg-slate-50",
+    running: "text-blue-600 bg-blue-50",
+    completed: "text-green-600 bg-green-50",
+    skipped: "text-yellow-600 bg-yellow-50",
+    failed: "text-red-600 bg-red-50"
+  };
+  function formatDuration(ms) {
+    if (!ms)
+      return "—";
+    if (ms < 1000)
+      return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
+  function formatCost(cost) {
+    if (!cost)
+      return "—";
+    return `$${cost.toFixed(4)}`;
+  }
+  function handleCardClick() {
+    if ($$props.stage.output && $$props.onToggle) {
+      $$props.onToggle();
+    }
+  }
+  function highlightOutput(text2) {
+    if (!text2)
+      return "";
+    let html2 = text2.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    html2 = html2.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+      return `<div class="bg-slate-800 text-slate-100 rounded-md p-3 my-2 overflow-x-auto"><div class="text-xs text-slate-400 mb-1">${lang || "code"}</div><code class="text-sm">${highlightCode(code, lang)}</code></div>`;
+    });
+    html2 = html2.replace(/`([^`]+)`/g, '<code class="bg-slate-200 text-slate-800 px-1 py-0.5 rounded text-sm">$1</code>');
+    html2 = html2.replace(/^(#{1,6})\s+(.+)$/gm, (_, hashes, content) => {
+      const level = hashes.length;
+      const sizes = [
+        "text-xl font-bold",
+        "text-lg font-bold",
+        "text-base font-semibold",
+        "text-sm font-semibold",
+        "text-sm font-medium",
+        "text-xs font-medium"
+      ];
+      return `<div class="${sizes[level - 1] || sizes[5]} text-slate-800 mt-3 mb-1">${content}</div>`;
+    });
+    html2 = html2.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold">$1</strong>');
+    html2 = html2.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
+    html2 = html2.replace(/^[-*]\s+(.+)$/gm, '<div class="flex gap-2 ml-2"><span class="text-slate-400">•</span><span>$1</span></div>');
+    html2 = html2.replace(/^(\d+)\.\s+(.+)$/gm, '<div class="flex gap-2 ml-2"><span class="text-slate-500 font-medium">$1.</span><span>$2</span></div>');
+    return html2;
+  }
+  function highlightCode(code, lang) {
+    const keywords = {
+      js: /\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|try|catch|throw|new|this)\b/g,
+      ts: /\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|try|catch|throw|new|this|interface|type|extends|implements)\b/g,
+      python: /\b(def|class|import|from|return|if|elif|else|for|while|try|except|raise|with|as|lambda|yield|async|await)\b/g,
+      json: /("(?:[^"\\]|\\.)*")\s*:/g
+    };
+    let highlighted = code;
+    highlighted = highlighted.replace(/(["'`])(?:(?!\1)[^\\]|\\.)*\1/g, '<span class="text-green-400">$&</span>');
+    highlighted = highlighted.replace(/\b(\d+\.?\d*)\b/g, '<span class="text-orange-400">$1</span>');
+    const langKey = lang?.toLowerCase();
+    if (keywords[langKey]) {
+      highlighted = highlighted.replace(keywords[langKey], '<span class="text-purple-400">$&</span>');
+    }
+    highlighted = highlighted.replace(/(\/\/.*$|#.*$)/gm, '<span class="text-slate-500 italic">$1</span>');
+    return highlighted;
+  }
+  next();
+  var fragment = root4();
+  var div = sibling(first_child(fragment));
+  var node = sibling(child(div));
+  var node_1 = sibling(node, 2);
+  var div_1 = sibling(node_1, 2);
+  div_1.__click = handleCardClick;
+  var node_2 = sibling(child(div_1));
+  var div_2 = sibling(node_2, 2);
+  var node_3 = sibling(child(div_2));
+  {
+    var consequent = ($$anchor2) => {
+      var fragment_1 = root_14();
+      var span = sibling(first_child(fragment_1));
+      var text_1 = child(span, true);
+      reset(span);
+      next();
+      template_effect(() => set_text(text_1, $$props.index + 1));
+      append($$anchor2, fragment_1);
+    };
+    var alternate_3 = ($$anchor2) => {
+      var fragment_2 = comment();
+      var node_4 = first_child(fragment_2);
+      {
+        var consequent_1 = ($$anchor3) => {
+          var fragment_3 = root_33();
+          next(2);
+          append($$anchor3, fragment_3);
+        };
+        var alternate_2 = ($$anchor3) => {
+          var fragment_4 = comment();
+          var node_5 = first_child(fragment_4);
+          {
+            var consequent_2 = ($$anchor4) => {
+              var fragment_5 = root_53();
+              next(2);
+              append($$anchor4, fragment_5);
+            };
+            var alternate_1 = ($$anchor4) => {
+              var fragment_6 = comment();
+              var node_6 = first_child(fragment_6);
+              {
+                var consequent_3 = ($$anchor5) => {
+                  var fragment_7 = root_7();
+                  next(2);
+                  append($$anchor5, fragment_7);
+                };
+                var alternate = ($$anchor5) => {
+                  var fragment_8 = comment();
+                  var node_7 = first_child(fragment_8);
+                  {
+                    var consequent_4 = ($$anchor6) => {
+                      var fragment_9 = root_9();
+                      next(2);
+                      append($$anchor6, fragment_9);
+                    };
+                    if_block(node_7, ($$render) => {
+                      if ($$props.stage.status === "failed")
+                        $$render(consequent_4);
+                    }, true);
+                  }
+                  append($$anchor5, fragment_8);
+                };
+                if_block(node_6, ($$render) => {
+                  if ($$props.stage.status === "skipped")
+                    $$render(consequent_3);
+                  else
+                    $$render(alternate, false);
+                }, true);
+              }
+              append($$anchor4, fragment_6);
+            };
+            if_block(node_5, ($$render) => {
+              if ($$props.stage.status === "completed")
+                $$render(consequent_2);
+              else
+                $$render(alternate_1, false);
+            }, true);
+          }
+          append($$anchor3, fragment_4);
+        };
+        if_block(node_4, ($$render) => {
+          if ($$props.stage.status === "running")
+            $$render(consequent_1);
+          else
+            $$render(alternate_2, false);
+        }, true);
+      }
+      append($$anchor2, fragment_2);
+    };
+    if_block(node_3, ($$render) => {
+      if ($$props.stage.status === "pending")
+        $$render(consequent);
+      else
+        $$render(alternate_3, false);
+    });
+  }
+  next();
+  reset(div_2);
+  var node_8 = sibling(div_2, 2);
+  var div_3 = sibling(node_8, 2);
+  var div_4 = sibling(child(div_3));
+  var text_2 = child(div_4);
+  reset(div_4);
+  var node_9 = sibling(div_4, 2);
+  {
+    var consequent_5 = ($$anchor2) => {
+      var fragment_10 = root_10();
+      var div_5 = sibling(first_child(fragment_10));
+      var text_3 = child(div_5, true);
+      reset(div_5);
+      next();
+      template_effect(() => set_text(text_3, $$props.stage.error));
+      append($$anchor2, fragment_10);
+    };
+    var alternate_4 = ($$anchor2) => {
+      var fragment_11 = comment();
+      var node_10 = first_child(fragment_11);
+      {
+        var consequent_6 = ($$anchor3) => {
+          var fragment_12 = root_122();
+          next(2);
+          append($$anchor3, fragment_12);
+        };
+        if_block(node_10, ($$render) => {
+          if ($$props.stage.status === "running")
+            $$render(consequent_6);
+        }, true);
+      }
+      append($$anchor2, fragment_11);
+    };
+    if_block(node_9, ($$render) => {
+      if ($$props.stage.error)
+        $$render(consequent_5);
+      else
+        $$render(alternate_4, false);
+    });
+  }
+  next();
+  reset(div_3);
+  var node_11 = sibling(div_3, 2);
+  var div_6 = sibling(node_11, 2);
+  var node_12 = sibling(child(div_6));
+  {
+    var consequent_7 = ($$anchor2) => {
+      var fragment_13 = root_132();
+      next(2);
+      append($$anchor2, fragment_13);
+    };
+    var alternate_5 = ($$anchor2) => {
+      var text_4 = text();
+      template_effect(($0) => set_text(text_4, `
+        ${$0 ?? ""}
+      `), [() => formatDuration($$props.stage.duration)]);
+      append($$anchor2, text_4);
+    };
+    if_block(node_12, ($$render) => {
+      if ($$props.stage.status === "running")
+        $$render(consequent_7);
+      else
+        $$render(alternate_5, false);
+    });
+  }
+  next();
+  reset(div_6);
+  var node_13 = sibling(div_6, 2);
+  var div_7 = sibling(node_13, 2);
+  var text_5 = child(div_7);
+  reset(div_7);
+  var node_14 = sibling(div_7, 2);
+  var node_15 = sibling(node_14, 2);
+  {
+    var consequent_8 = ($$anchor2) => {
+      var fragment_15 = root_15();
+      var div_8 = sibling(first_child(fragment_15));
+      var svg = sibling(child(div_8));
+      next();
+      reset(div_8);
+      next();
+      template_effect(() => set_class(svg, 0, `w-4 h-4 text-slate-500 transition-transform duration-200 ${expanded() ? "rotate-180" : ""}`));
+      append($$anchor2, fragment_15);
+    };
+    if_block(node_15, ($$render) => {
+      if ($$props.stage.output)
+        $$render(consequent_8);
+    });
+  }
+  next();
+  reset(div_1);
+  var node_16 = sibling(div_1, 2);
+  var node_17 = sibling(node_16, 2);
+  {
+    var consequent_9 = ($$anchor2) => {
+      var fragment_16 = root_16();
+      var div_9 = sibling(first_child(fragment_16));
+      var div_10 = sibling(child(div_9));
+      var div_11 = sibling(child(div_10), 3);
+      var text_6 = child(div_11);
+      reset(div_11);
+      next();
+      reset(div_10);
+      var div_12 = sibling(div_10, 2);
+      var node_18 = sibling(child(div_12));
+      html(node_18, () => highlightOutput($$props.stage.output));
+      next();
+      reset(div_12);
+      next();
+      reset(div_9);
+      next();
+      template_effect(($0) => set_text(text_6, `${$0 ?? ""} chars`), [() => $$props.stage.output.length.toLocaleString()]);
+      append($$anchor2, fragment_16);
+    };
+    if_block(node_17, ($$render) => {
+      if ($$props.stage.output && expanded())
+        $$render(consequent_9);
+    });
+  }
+  next();
+  reset(div);
+  template_effect(($0) => {
+    set_class(div, 1, `rounded-lg border ${statusColors[$$props.stage.status] ?? ""} transition-all duration-300 ${$$props.stage.output ? "cursor-pointer hover:shadow-md" : ""}`);
+    set_class(div_2, 1, `w-8 h-8 rounded-full flex items-center justify-center text-lg shrink-0
+      ${$$props.stage.status === "pending" ? "bg-slate-200 text-slate-500" : ""}
+      ${$$props.stage.status === "running" ? "bg-blue-200 text-blue-700 animate-pulse" : ""}
+      ${$$props.stage.status === "completed" ? "bg-green-200 text-green-700" : ""}
+      ${$$props.stage.status === "skipped" ? "bg-yellow-200 text-yellow-700" : ""}
+      ${$$props.stage.status === "failed" ? "bg-red-200 text-red-700" : ""}
+    `);
+    set_text(text_2, `
+        ${$$props.index + 1}. ${$$props.stage.name ?? ""}
+      `);
+    set_text(text_5, `
+      ${$0 ?? ""}
+    `);
+  }, [() => formatCost($$props.stage.cost)]);
+  append($$anchor, fragment);
+  pop();
+}
+if (undefined) {}
+var StageStatus_default = StageStatus;
+delegate(["click"]);
+
+// web/components/execution/ExecutionProgress.svelte
+var root_17 = from_html(`
+        <span class="text-xs text-blue-600 flex items-center gap-1">
+          <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+          Connecting...
+        </span>
+      `, 1);
+var root_34 = from_html(`
+        <span class="text-xs text-green-600 flex items-center gap-1">
+          <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+          Live
+        </span>
+      `, 1);
+var root_43 = from_html(`
+      <!>
+    `, 1);
+var root_54 = from_html(`
+      <div class="text-center text-slate-500 py-8">
+        Waiting for stages to start...
+      </div>
+    `, 1);
+var root_8 = from_html(`
+            <div class="text-sm text-green-600 grid grid-cols-2 gap-2">
+              <div> </div>
+              <div> </div>
+              <div> </div>
+              <div> </div>
+            </div>
+          `, 1);
+var root_72 = from_html(`
+        <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+          <div class="flex items-center gap-2 text-green-700 font-medium mb-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Execution Complete
+          </div>
+          <!>
+        </div>
+      `, 1);
+var root_102 = from_html(`
+        <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+          <div class="flex items-center gap-2 text-yellow-700 font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            Execution Cancelled
+          </div>
+        </div>
+      `, 1);
+var root_123 = from_html(`
+            <div class="text-sm text-red-600"> </div>
+          `, 1);
+var root_11 = from_html(`
+        <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+          <div class="flex items-center gap-2 text-red-700 font-medium mb-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Execution Failed
+          </div>
+          <!>
+        </div>
+      `, 1);
+var root_63 = from_html(`
+    <div class="mt-6 pt-4 border-t border-slate-200">
+      <!>
+    </div>
+  `, 1);
+var root5 = from_html(`
+
+<div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="font-semibold text-slate-700">Execution Progress</h2>
+    <div class="flex items-center gap-4">
+      <!>
+      <span class="text-sm font-medium text-slate-700"> </span>
+    </div>
+  </div>
+
+  <div class="space-y-2">
+    <!>
+  </div>
+
+  <!>
+</div>`, 1);
+function ExecutionProgress($$anchor, $$props) {
+  push($$props, true);
+  let stages = state(proxy([]));
+  let result = state(null);
+  let wsStatus = state("connecting");
+  let totalCost = state(0);
+  let expandedStages = state(proxy(new Set));
+  function toggleStage(stageId) {
+    const newSet = new Set(get(expandedStages));
+    if (newSet.has(stageId)) {
+      newSet.delete(stageId);
+    } else {
+      newSet.add(stageId);
+    }
+    set(expandedStages, newSet, true);
+  }
+  function autoExpandStage(stageId) {
+    if (!get(expandedStages).has(stageId)) {
+      const newSet = new Set(get(expandedStages));
+      newSet.add(stageId);
+      set(expandedStages, newSet, true);
+    }
+  }
+  user_effect(() => {
+    if (!$$props.executionId)
+      return;
+    const ws = new WebSocket(`ws://${location.host}/ws`);
+    ws.onopen = () => {
+      set(wsStatus, "connected");
+      ws.send(JSON.stringify({ type: "subscribe", executionId: $$props.executionId }));
+    };
+    ws.onmessage = (event2) => {
+      const data = JSON.parse(event2.data);
+      if (data.type === "subscribed" && !data.success) {
+        set(wsStatus, "disconnected");
+        return;
+      }
+      if (data.type === "execution:started") {
+        set(stages, [], true);
+      }
+      if (data.type === "stage:started") {
+        const existingIndex = get(stages).findIndex((s) => s.id === data.stage.id);
+        if (existingIndex >= 0) {
+          get(stages)[existingIndex] = { ...get(stages)[existingIndex], status: "running" };
+        } else {
+          set(stages, [
+            ...get(stages),
+            {
+              id: data.stage.id,
+              name: data.stage.name,
+              type: data.stage.type,
+              status: "running"
+            }
+          ], true);
+        }
+        autoExpandStage(data.stage.id);
+      }
+      if (data.type === "stage:completed") {
+        const index2 = get(stages).findIndex((s) => s.id === data.stage.id);
+        if (index2 >= 0) {
+          get(stages)[index2] = {
+            ...get(stages)[index2],
+            status: "completed",
+            duration: data.result?.duration,
+            cost: data.result?.cost
+          };
+          set(totalCost, get(stages).reduce((sum, s) => sum + (s.cost || 0), 0), true);
+        }
+      }
+      if (data.type === "stage:skipped") {
+        const existingIndex = get(stages).findIndex((s) => s.id === data.stage.id);
+        if (existingIndex >= 0) {
+          get(stages)[existingIndex] = { ...get(stages)[existingIndex], status: "skipped" };
+        } else {
+          set(stages, [
+            ...get(stages),
+            {
+              id: data.stage.id,
+              name: data.stage.name,
+              type: data.stage.type,
+              status: "skipped"
+            }
+          ], true);
+        }
+      }
+      if (data.type === "stage:failed") {
+        const index2 = get(stages).findIndex((s) => s.id === data.stage.id);
+        if (index2 >= 0) {
+          get(stages)[index2] = { ...get(stages)[index2], status: "failed", error: data.error };
+        }
+      }
+      if (data.type === "stage:output") {
+        const index2 = get(stages).findIndex((s) => s.id === data.stageId);
+        if (index2 >= 0) {
+          get(stages)[index2] = { ...get(stages)[index2], output: data.output };
+          autoExpandStage(data.stageId);
+        }
+      }
+      if (data.type === "execution:completed" || data.type === "execution:failed") {
+        set(result, data.result || { status: "failed", pipelineId: "", error: data.error }, true);
+        set(totalCost, get(result)?.summary?.totalCost || get(totalCost), true);
+        ws.close();
+        set(wsStatus, "disconnected");
+        if ($$props.onComplete) {
+          $$props.onComplete(get(result));
+        }
+      }
+      if (data.type === "execution:cancelled") {
+        set(result, { status: "cancelled", pipelineId: "" }, true);
+        ws.close();
+        set(wsStatus, "disconnected");
+        if ($$props.onComplete) {
+          $$props.onComplete(get(result));
+        }
+      }
+    };
+    ws.onerror = () => {
+      set(wsStatus, "disconnected");
+    };
+    ws.onclose = () => {
+      set(wsStatus, "disconnected");
+    };
+    return () => {
+      ws.close();
+    };
+  });
+  function formatCost(cost) {
+    return `$${cost.toFixed(4)}`;
+  }
+  next();
+  var fragment = root5();
+  var div = sibling(first_child(fragment));
+  var div_1 = sibling(child(div));
+  var div_2 = sibling(child(div_1), 3);
+  var node = sibling(child(div_2));
+  {
+    var consequent = ($$anchor2) => {
+      var fragment_1 = root_17();
+      next(2);
+      append($$anchor2, fragment_1);
+    };
+    var alternate = ($$anchor2) => {
+      var fragment_2 = comment();
+      var node_1 = first_child(fragment_2);
+      {
+        var consequent_1 = ($$anchor3) => {
+          var fragment_3 = root_34();
+          next(2);
+          append($$anchor3, fragment_3);
+        };
+        if_block(node_1, ($$render) => {
+          if (get(wsStatus) === "connected")
+            $$render(consequent_1);
+        }, true);
+      }
+      append($$anchor2, fragment_2);
+    };
+    if_block(node, ($$render) => {
+      if (get(wsStatus) === "connecting")
+        $$render(consequent);
+      else
+        $$render(alternate, false);
+    });
+  }
+  var span = sibling(node, 2);
+  var text2 = child(span);
+  reset(span);
+  next();
+  reset(div_2);
+  next();
+  reset(div_1);
+  var div_3 = sibling(div_1, 2);
+  var node_2 = sibling(child(div_3));
+  each(node_2, 17, () => get(stages), index, ($$anchor2, stage, index2) => {
+    next();
+    var fragment_4 = root_43();
+    var node_3 = sibling(first_child(fragment_4));
+    {
+      let $0 = user_derived(() => get(expandedStages).has(get(stage).id));
+      StageStatus_default(node_3, {
+        get stage() {
+          return get(stage);
+        },
+        index: index2,
+        get expanded() {
+          return get($0);
+        },
+        onToggle: () => toggleStage(get(stage).id)
+      });
+    }
+    next();
+    append($$anchor2, fragment_4);
+  }, ($$anchor2) => {
+    next();
+    var fragment_5 = root_54();
+    next(2);
+    append($$anchor2, fragment_5);
+  });
+  next();
+  reset(div_3);
+  var node_4 = sibling(div_3, 2);
+  {
+    var consequent_6 = ($$anchor2) => {
+      var fragment_6 = root_63();
+      var div_4 = sibling(first_child(fragment_6));
+      var node_5 = sibling(child(div_4));
+      {
+        var consequent_3 = ($$anchor3) => {
+          var fragment_7 = root_72();
+          var div_5 = sibling(first_child(fragment_7));
+          var node_6 = sibling(child(div_5), 3);
+          {
+            var consequent_2 = ($$anchor4) => {
+              var fragment_8 = root_8();
+              var div_6 = sibling(first_child(fragment_8));
+              var div_7 = sibling(child(div_6));
+              var text_1 = child(div_7);
+              reset(div_7);
+              var div_8 = sibling(div_7, 2);
+              var text_2 = child(div_8);
+              reset(div_8);
+              var div_9 = sibling(div_8, 2);
+              var text_3 = child(div_9);
+              reset(div_9);
+              var div_10 = sibling(div_9, 2);
+              var text_4 = child(div_10);
+              reset(div_10);
+              next();
+              reset(div_6);
+              next();
+              template_effect(($0, $1) => {
+                set_text(text_1, `Duration: ${$0 ?? ""}s`);
+                set_text(text_2, `Cost: $${$1 ?? ""}`);
+                set_text(text_3, `Stages run: ${get(result).summary.stagesRun ?? ""}`);
+                set_text(text_4, `Stages skipped: ${get(result).summary.stagesSkipped ?? ""}`);
+              }, [
+                () => (get(result).summary.totalDuration / 1000).toFixed(1),
+                () => get(result).summary.totalCost.toFixed(4)
+              ]);
+              append($$anchor4, fragment_8);
+            };
+            if_block(node_6, ($$render) => {
+              if (get(result).summary)
+                $$render(consequent_2);
+            });
+          }
+          next();
+          reset(div_5);
+          next();
+          append($$anchor3, fragment_7);
+        };
+        var alternate_2 = ($$anchor3) => {
+          var fragment_9 = comment();
+          var node_7 = first_child(fragment_9);
+          {
+            var consequent_4 = ($$anchor4) => {
+              var fragment_10 = root_102();
+              next(2);
+              append($$anchor4, fragment_10);
+            };
+            var alternate_1 = ($$anchor4) => {
+              var fragment_11 = root_11();
+              var div_11 = sibling(first_child(fragment_11));
+              var node_8 = sibling(child(div_11), 3);
+              {
+                var consequent_5 = ($$anchor5) => {
+                  var fragment_12 = root_123();
+                  var div_12 = sibling(first_child(fragment_12));
+                  var text_5 = child(div_12, true);
+                  reset(div_12);
+                  next();
+                  template_effect(() => set_text(text_5, get(result).error));
+                  append($$anchor5, fragment_12);
+                };
+                if_block(node_8, ($$render) => {
+                  if (get(result).error)
+                    $$render(consequent_5);
+                });
+              }
+              next();
+              reset(div_11);
+              next();
+              append($$anchor4, fragment_11);
+            };
+            if_block(node_7, ($$render) => {
+              if (get(result).status === "cancelled")
+                $$render(consequent_4);
+              else
+                $$render(alternate_1, false);
+            }, true);
+          }
+          append($$anchor3, fragment_9);
+        };
+        if_block(node_5, ($$render) => {
+          if (get(result).status === "success" || get(result).status === "completed")
+            $$render(consequent_3);
+          else
+            $$render(alternate_2, false);
+        });
+      }
+      next();
+      reset(div_4);
+      next();
+      append($$anchor2, fragment_6);
+    };
+    if_block(node_4, ($$render) => {
+      if (get(result))
+        $$render(consequent_6);
+    });
+  }
+  next();
+  reset(div);
+  template_effect(($0) => set_text(text2, `
+        Cost: ${$0 ?? ""}
+      `), [() => formatCost(get(totalCost))]);
+  append($$anchor, fragment);
+  pop();
+}
+if (undefined) {}
+var ExecutionProgress_default = ExecutionProgress;
+
+// web/components/execution/ExecutionResult.svelte
+var root_23 = from_html(`
+      <div class="mt-4 pt-4 border-t border-slate-100">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-slate-500 text-xs uppercase mb-1">Duration</div>
+            <div class="font-medium text-slate-800"> </div>
+          </div>
+          <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-slate-500 text-xs uppercase mb-1">Total Cost</div>
+            <div class="font-medium text-slate-800"> </div>
+          </div>
+          <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-slate-500 text-xs uppercase mb-1">Stages Run</div>
+            <div class="font-medium text-slate-800"> </div>
+          </div>
+          <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-slate-500 text-xs uppercase mb-1">Skipped</div>
+            <div class="font-medium text-slate-800"> </div>
+          </div>
+        </div>
+      </div>
+    `, 1);
+var root_19 = from_html(`
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-semibold text-slate-700">Output</h2>
+      <div class="flex gap-2">
+        <button class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors">
+          Copy
+        </button>
+        <button class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors"> </button>
+      </div>
+    </div>
+
+    <div class="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
+      <pre> </pre>
+    </div>
+
+    <!>
+  </div>
+`, 1);
+var root6 = from_html(`
+
+<!>`, 1);
+function ExecutionResult($$anchor, $$props) {
+  push($$props, true);
+  let showFullOutput = state(false);
+  function formatOutput(output) {
+    if (!output)
+      return "";
+    if (typeof output === "object") {
+      return JSON.stringify(output, null, 2);
+    }
+    if (typeof output === "string") {
+      try {
+        const parsed = JSON.parse(output);
+        return JSON.stringify(parsed, null, 2);
+      } catch {
+        return output;
+      }
+    }
+    return String(output);
+  }
+  function copyToClipboard() {
+    if ($$props.result.output) {
+      navigator.clipboard.writeText(formatOutput($$props.result.output));
+    }
+  }
+  next();
+  var fragment = root6();
+  var node = sibling(first_child(fragment));
+  {
+    var consequent_1 = ($$anchor2) => {
+      var fragment_1 = root_19();
+      var div = sibling(first_child(fragment_1));
+      var div_1 = sibling(child(div));
+      var div_2 = sibling(child(div_1), 3);
+      var button = sibling(child(div_2));
+      button.__click = copyToClipboard;
+      var button_1 = sibling(button, 2);
+      button_1.__click = () => set(showFullOutput, !get(showFullOutput));
+      var text2 = child(button_1);
+      reset(button_1);
+      next();
+      reset(div_2);
+      next();
+      reset(div_1);
+      var div_3 = sibling(div_1, 2);
+      var pre = sibling(child(div_3));
+      var text_1 = child(pre, true);
+      reset(pre);
+      next();
+      reset(div_3);
+      var node_1 = sibling(div_3, 2);
+      {
+        var consequent = ($$anchor3) => {
+          var fragment_2 = root_23();
+          var div_4 = sibling(first_child(fragment_2));
+          var div_5 = sibling(child(div_4));
+          var div_6 = sibling(child(div_5));
+          var div_7 = sibling(child(div_6), 3);
+          var text_2 = child(div_7);
+          reset(div_7);
+          next();
+          reset(div_6);
+          var div_8 = sibling(div_6, 2);
+          var div_9 = sibling(child(div_8), 3);
+          var text_3 = child(div_9);
+          reset(div_9);
+          next();
+          reset(div_8);
+          var div_10 = sibling(div_8, 2);
+          var div_11 = sibling(child(div_10), 3);
+          var text_4 = child(div_11);
+          reset(div_11);
+          next();
+          reset(div_10);
+          var div_12 = sibling(div_10, 2);
+          var div_13 = sibling(child(div_12), 3);
+          var text_5 = child(div_13);
+          reset(div_13);
+          next();
+          reset(div_12);
+          next();
+          reset(div_5);
+          next();
+          reset(div_4);
+          next();
+          template_effect(($0, $1) => {
+            set_text(text_2, `
+              ${$0 ?? ""}s
+            `);
+            set_text(text_3, `
+              $${$1 ?? ""}
+            `);
+            set_text(text_4, `
+              ${$$props.result.summary.stagesRun ?? ""}
+            `);
+            set_text(text_5, `
+              ${$$props.result.summary.stagesSkipped ?? ""}
+            `);
+          }, [
+            () => ($$props.result.summary.totalDuration / 1000).toFixed(2),
+            () => $$props.result.summary.totalCost.toFixed(4)
+          ]);
+          append($$anchor3, fragment_2);
+        };
+        if_block(node_1, ($$render) => {
+          if ($$props.result.summary)
+            $$render(consequent);
+        });
+      }
+      next();
+      reset(div);
+      next();
+      template_effect(($0) => {
+        set_text(text2, `
+          ${get(showFullOutput) ? "Collapse" : "Expand"}
+        `);
+        set_class(pre, 1, `p-4 text-sm text-slate-700 whitespace-pre-wrap overflow-x-auto ${get(showFullOutput) ? "" : "max-h-64 overflow-y-auto"}`);
+        set_text(text_1, $0);
+      }, [() => formatOutput($$props.result.output)]);
+      append($$anchor2, fragment_1);
+    };
+    if_block(node, ($$render) => {
+      if ($$props.result.output)
+        $$render(consequent_1);
+    });
+  }
+  append($$anchor, fragment);
+  pop();
+}
+if (undefined) {}
+var ExecutionResult_default = ExecutionResult;
+delegate(["click"]);
+
+// web/components/execution/ExecutionHistory.svelte
+var root_35 = from_svg(`
+                  <svg class="w-3 h-3 inline mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                `, 1);
+var root_55 = from_svg(`
+                  <svg class="w-3 h-3 inline mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                `, 1);
+var root_64 = from_svg(`
+                  <svg class="w-3 h-3 inline mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  </svg>
+                `, 1);
+var root_24 = from_html(`
+        <button class="w-full text-left p-3 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-slate-800 text-sm truncate"> </div>
+              <div class="text-xs text-slate-500 truncate mt-0.5"> </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span>
+                <!> </span>
+              <span class="text-xs text-slate-400"> </span>
+            </div>
+          </div>
+        </button>
+      `, 1);
+var root_110 = from_html(`
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+    <h3 class="text-sm font-medium text-slate-500 mb-3">Recent Executions</h3>
+    <div class="space-y-2">
+      <!>
+    </div>
+  </div>
+`, 1);
+var root7 = from_html(`
+
+<!>`, 1);
+function ExecutionHistory($$anchor, $$props) {
+  push($$props, true);
+  let history = state(proxy([]));
+  user_effect(() => {
+    try {
+      const stored = localStorage.getItem("executionHistory");
+      if (stored) {
+        set(history, JSON.parse(stored), true);
+      }
+    } catch {
+      set(history, [], true);
+    }
+  });
+  function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    const now2 = new Date;
+    const diff = now2.getTime() - date.getTime();
+    if (diff < 60000)
+      return "Just now";
+    if (diff < 3600000)
+      return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000)
+      return `${Math.floor(diff / 3600000)}h ago`;
+    return date.toLocaleDateString();
+  }
+  const statusIcons = { completed: "", failed: "", cancelled: "" };
+  const statusColors = {
+    completed: "text-green-600 bg-green-50",
+    failed: "text-red-600 bg-red-50",
+    cancelled: "text-yellow-600 bg-yellow-50"
+  };
+  next();
+  var fragment = root7();
+  var node = sibling(first_child(fragment));
+  {
+    var consequent_2 = ($$anchor2) => {
+      var fragment_1 = root_110();
+      var div = sibling(first_child(fragment_1));
+      var div_1 = sibling(child(div), 3);
+      var node_1 = sibling(child(div_1));
+      each(node_1, 17, () => get(history), index, ($$anchor3, entry) => {
+        next();
+        var fragment_2 = root_24();
+        var button = sibling(first_child(fragment_2));
+        button.__click = () => $$props.onSelect?.(get(entry).executionId);
+        var div_2 = sibling(child(button));
+        var div_3 = sibling(child(div_2));
+        var div_4 = sibling(child(div_3));
+        var text2 = child(div_4);
+        reset(div_4);
+        var div_5 = sibling(div_4, 2);
+        var text_1 = child(div_5);
+        reset(div_5);
+        next();
+        reset(div_3);
+        var div_6 = sibling(div_3, 2);
+        var span = sibling(child(div_6));
+        var node_2 = sibling(child(span));
+        {
+          var consequent = ($$anchor4) => {
+            var fragment_3 = root_35();
+            next(2);
+            append($$anchor4, fragment_3);
+          };
+          var alternate_1 = ($$anchor4) => {
+            var fragment_4 = comment();
+            var node_3 = first_child(fragment_4);
+            {
+              var consequent_1 = ($$anchor5) => {
+                var fragment_5 = root_55();
+                next(2);
+                append($$anchor5, fragment_5);
+              };
+              var alternate = ($$anchor5) => {
+                var fragment_6 = root_64();
+                next(2);
+                append($$anchor5, fragment_6);
+              };
+              if_block(node_3, ($$render) => {
+                if (get(entry).status === "failed")
+                  $$render(consequent_1);
+                else
+                  $$render(alternate, false);
+              }, true);
+            }
+            append($$anchor4, fragment_4);
+          };
+          if_block(node_2, ($$render) => {
+            if (get(entry).status === "completed")
+              $$render(consequent);
+            else
+              $$render(alternate_1, false);
+          });
+        }
+        var text_2 = sibling(node_2);
+        reset(span);
+        var span_1 = sibling(span, 2);
+        var text_3 = child(span_1);
+        reset(span_1);
+        next();
+        reset(div_6);
+        next();
+        reset(div_2);
+        next();
+        reset(button);
+        next();
+        template_effect(($0) => {
+          set_text(text2, `
+                ${get(entry).pipelineName ?? ""}
+              `);
+          set_text(text_1, `
+                ${get(entry).inputPreview ?? ""}
+              `);
+          set_class(span, 1, `text-xs px-2 py-0.5 rounded-full ${statusColors[get(entry).status] ?? ""}`);
+          set_text(text_2, `
+                ${get(entry).status ?? ""}
+              `);
+          set_text(text_3, `
+                ${$0 ?? ""}
+              `);
+        }, [() => formatTime(get(entry).timestamp)]);
+        append($$anchor3, fragment_2);
+      });
+      next();
+      reset(div_1);
+      next();
+      reset(div);
+      next();
+      append($$anchor2, fragment_1);
+    };
+    if_block(node, ($$render) => {
+      if (get(history).length > 0)
+        $$render(consequent_2);
+    });
+  }
+  append($$anchor, fragment);
+  pop();
+}
+if (undefined) {}
+var ExecutionHistory_default = ExecutionHistory;
+delegate(["click"]);
+
+// web/components/execution/ExecutionForm.svelte
+var root_111 = from_html(`
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-6">
+    <div class="flex items-center justify-center py-8">
+      <div class="text-slate-500">Checking configuration...</div>
+    </div>
+  </div>
+`, 1);
+var root_36 = from_html(`
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-6">
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+      <h3 class="font-semibold text-amber-800 mb-2">No Execution Method Available</h3>
+      <p class="text-amber-700 text-sm mb-3">
+        To run pipelines, you need either an Anthropic API key or a CLI tool installed.
+      </p>
+      <div class="text-sm text-amber-700 space-y-2">
+        <p><strong>Option 1:</strong> Set ANTHROPIC_API_KEY environment variable</p>
+        <p><strong>Option 2:</strong> Install Claude Code: <code class="bg-amber-100 px-1.5 py-0.5 rounded">npm install -g @anthropic-ai/claude-code</code></p>
+      </div>
+    </div>
+  </div>
+`, 1);
+var root_56 = from_html(`
+              <span class="ml-1 text-xs opacity-75">(ready)</span>
+            `, 1);
+var root_73 = from_html(`
+                <option> </option>
+              `, 1);
+var root_82 = from_html(`
+                <option> </option>
+              `, 1);
+var root_92 = from_html(`
+                <option> </option>
+              `, 1);
+var root_65 = from_html(`
+          <div class="flex gap-2 ml-4">
+            <span class="text-sm text-slate-500">Tool:</span>
+            <select class="text-sm border border-slate-300 rounded-lg px-2 py-1 bg-white disabled:opacity-50">
+              <!>
+              <!>
+              <!>
+            </select>
+          </div>
+        `, 1);
+var root_124 = from_html(`
+            <button class="px-4 py-2 text-sm bg-red-100 text-red-600 rounded-lg hover:bg-red-200 disabled:opacity-50 transition-colors"> </button>
+          `, 1);
+var root_142 = from_html(`
+            <button class="px-4 py-2 text-sm bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors">
+              New Run
+            </button>
+          `, 1);
+var root_152 = from_svg(`
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Running...
+            `, 1);
+var root_172 = from_html(`
+      <div class="bg-red-50 text-red-600 p-4 rounded-lg mt-4 border border-red-200">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <div class="font-medium">Error</div>
+            <div class="text-sm mt-1"> </div>
+            <button class="mt-2 text-sm text-red-700 hover:text-red-800 underline">
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    `, 1);
+var root_18 = from_html(`
+    <!>
+  `, 1);
+var root_44 = from_html(`
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-6">
+    <h2 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
+      <span class="text-xl">&#9654;</span> Run Pipeline
+    </h2>
+
+    <!-- Execution Mode Selector -->
+    <div class="mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+      <div class="flex items-center gap-4 flex-wrap">
+        <span class="text-sm font-medium text-slate-600">Execution Mode:</span>
+        <div class="flex gap-2">
+          <button>
+            API
+            <!>
+          </button>
+          <button>
+            CLI Tool
+          </button>
+        </div>
+
+        <!>
+      </div>
+      <p class="text-xs text-slate-500 mt-2">
+        <!>
+      </p>
+    </div>
+
+    <div class="mb-4">
+      <label for="prompt-input" class="block text-sm font-medium text-slate-600 mb-2">
+        Enter your prompt to optimize
+      </label>
+      <textarea id="prompt-input" placeholder="Type your prompt here..." class="w-full h-32 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none disabled:bg-slate-50 disabled:text-slate-500"></textarea>
+      <div class="flex justify-between items-center mt-2">
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-slate-500"> </span>
+          <span class="text-xs text-slate-400">Ctrl+Enter to run</span>
+        </div>
+        <div class="flex gap-2">
+          <!>
+          <button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
+            <!>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!>
+  </div>
+
+  <!>
+`, 1);
+var root_192 = from_html(`
+  <!>
+`, 1);
+var root_20 = from_html(`
+  <div class="mt-6">
+    <!>
+  </div>
+`, 1);
+var root8 = from_html(`
+
+<!>
+
+<!>
+
+<!>`, 1);
+function ExecutionForm($$anchor, $$props) {
+  push($$props, true);
+  let input = state("");
+  let status = state("idle");
+  let executionId = state(null);
+  let error = state(null);
+  let result = state(null);
+  let configStatus = state("checking");
+  let config = state(null);
+  let executionMode = state("api");
+  let selectedCliTool = state("claude");
+  let cancelRequested = state(false);
+  user_effect(() => {
+    fetch("/api/config/status").then((r) => r.json()).then((data) => {
+      set(config, data, true);
+      set(configStatus, "loaded");
+      if (data.hasApiKey) {
+        set(executionMode, "api");
+      } else {
+        set(executionMode, "cli");
+        if (data.cliTools.claude.available) {
+          set(selectedCliTool, "claude");
+        } else if (data.cliTools.opencode.available) {
+          set(selectedCliTool, "opencode");
+        } else if (data.cliTools.aider.available) {
+          set(selectedCliTool, "aider");
+        }
+      }
+    }).catch(() => {
+      set(configStatus, "loaded");
+      set(config, {
+        hasApiKey: false,
+        cliTools: {
+          claude: { available: false },
+          opencode: { available: false },
+          aider: { available: false }
+        }
+      }, true);
+    });
+  });
+  let canExecute = user_derived(() => () => {
+    if (!get(config))
+      return false;
+    if (get(executionMode) === "api")
+      return get(config).hasApiKey;
+    return get(config).cliTools[get(selectedCliTool)]?.available ?? false;
+  });
+  user_effect(() => {
+    function handleKeydown(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        if (get(status) !== "running" && get(input).trim() && get(canExecute)()) {
+          e.preventDefault();
+          runPipeline();
+        }
+      }
+      if (e.key === "Escape" && get(status) === "running") {
+        e.preventDefault();
+        cancelExecution();
+      }
+    }
+    document.addEventListener("keydown", handleKeydown);
+    return () => document.removeEventListener("keydown", handleKeydown);
+  });
+  async function runPipeline() {
+    if (!get(input).trim() || !get(canExecute)())
+      return;
+    set(status, "running");
+    set(error, null);
+    set(result, null);
+    set(cancelRequested, false);
+    try {
+      const body = {
+        input: get(input).trim(),
+        executionMode: get(executionMode)
+      };
+      if (get(executionMode) === "cli") {
+        body.cliTool = get(selectedCliTool);
+      }
+      const response = await fetch(`/api/pipelines/${$$props.pipelineId}/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!response.ok) {
+        const data2 = await response.json();
+        throw new Error(data2.error || "Failed to start execution");
+      }
+      const data = await response.json();
+      set(executionId, data.executionId, true);
+    } catch (e) {
+      set(status, "failed");
+      set(error, e instanceof Error ? e.message : "Unknown error", true);
+    }
+  }
+  async function cancelExecution() {
+    if (!get(executionId) || get(cancelRequested))
+      return;
+    if (get(status) === "running") {
+      set(cancelRequested, true);
+      try {
+        await fetch(`/api/executions/${get(executionId)}/cancel`, { method: "POST" });
+      } catch {}
+    }
+  }
+  function handleComplete(execResult) {
+    set(result, execResult, true);
+    set(status, execResult.status === "success" || execResult.status === "completed" ? "completed" : "failed", true);
+    saveToHistory({
+      executionId: get(executionId),
+      pipelineId: $$props.pipelineId,
+      pipelineName: $$props.pipelineName || $$props.pipelineId,
+      timestamp: new Date().toISOString(),
+      status: execResult.status === "success" || execResult.status === "completed" ? "completed" : execResult.status === "cancelled" ? "cancelled" : "failed",
+      inputPreview: get(input).trim().substring(0, 100)
+    });
+  }
+  function saveToHistory(entry) {
+    try {
+      const history = JSON.parse(localStorage.getItem("executionHistory") || "[]");
+      history.unshift(entry);
+      localStorage.setItem("executionHistory", JSON.stringify(history.slice(0, 3)));
+    } catch {}
+  }
+  function reset2() {
+    set(status, "idle");
+    set(executionId, null);
+    set(result, null);
+    set(error, null);
+    set(cancelRequested, false);
+  }
+  next();
+  var fragment = root8();
+  var node = sibling(first_child(fragment));
+  {
+    var consequent = ($$anchor2) => {
+      var fragment_1 = root_111();
+      next(2);
+      append($$anchor2, fragment_1);
+    };
+    var alternate_4 = ($$anchor2) => {
+      var fragment_2 = comment();
+      var node_1 = first_child(fragment_2);
+      {
+        var consequent_1 = ($$anchor3) => {
+          var fragment_3 = root_36();
+          next(2);
+          append($$anchor3, fragment_3);
+        };
+        var alternate_3 = ($$anchor3) => {
+          var fragment_4 = root_44();
+          var div = sibling(first_child(fragment_4));
+          var node_2 = sibling(child(div), 3);
+          var div_1 = sibling(node_2, 2);
+          var div_2 = sibling(child(div_1));
+          var div_3 = sibling(child(div_2), 3);
+          var button = sibling(child(div_3));
+          button.__click = () => set(executionMode, "api");
+          var node_3 = sibling(child(button));
+          {
+            var consequent_2 = ($$anchor4) => {
+              var fragment_5 = root_56();
+              next(2);
+              append($$anchor4, fragment_5);
+            };
+            if_block(node_3, ($$render) => {
+              if (get(config)?.hasApiKey)
+                $$render(consequent_2);
+            });
+          }
+          next();
+          reset(button);
+          var button_1 = sibling(button, 2);
+          button_1.__click = () => set(executionMode, "cli");
+          next();
+          reset(div_3);
+          var node_4 = sibling(div_3, 2);
+          {
+            var consequent_6 = ($$anchor4) => {
+              var fragment_6 = root_65();
+              var div_4 = sibling(first_child(fragment_6));
+              var select = sibling(child(div_4), 3);
+              var node_5 = sibling(child(select));
+              {
+                var consequent_3 = ($$anchor5) => {
+                  var fragment_7 = root_73();
+                  var option = sibling(first_child(fragment_7));
+                  var text2 = child(option);
+                  reset(option);
+                  option.value = option.__value = "claude";
+                  next();
+                  template_effect(() => set_text(text2, `Claude Code ${get(config).cliTools.claude.version ? `(${get(config).cliTools.claude.version})` : ""}`));
+                  append($$anchor5, fragment_7);
+                };
+                if_block(node_5, ($$render) => {
+                  if (get(config)?.cliTools.claude.available)
+                    $$render(consequent_3);
+                });
+              }
+              var node_6 = sibling(node_5, 2);
+              {
+                var consequent_4 = ($$anchor5) => {
+                  var fragment_8 = root_82();
+                  var option_1 = sibling(first_child(fragment_8));
+                  var text_1 = child(option_1);
+                  reset(option_1);
+                  option_1.value = option_1.__value = "opencode";
+                  next();
+                  template_effect(() => set_text(text_1, `OpenCode ${get(config).cliTools.opencode.version ? `(${get(config).cliTools.opencode.version})` : ""}`));
+                  append($$anchor5, fragment_8);
+                };
+                if_block(node_6, ($$render) => {
+                  if (get(config)?.cliTools.opencode.available)
+                    $$render(consequent_4);
+                });
+              }
+              var node_7 = sibling(node_6, 2);
+              {
+                var consequent_5 = ($$anchor5) => {
+                  var fragment_9 = root_92();
+                  var option_2 = sibling(first_child(fragment_9));
+                  var text_2 = child(option_2);
+                  reset(option_2);
+                  option_2.value = option_2.__value = "aider";
+                  next();
+                  template_effect(() => set_text(text_2, `Aider ${get(config).cliTools.aider.version ? `(${get(config).cliTools.aider.version})` : ""}`));
+                  append($$anchor5, fragment_9);
+                };
+                if_block(node_7, ($$render) => {
+                  if (get(config)?.cliTools.aider.available)
+                    $$render(consequent_5);
+                });
+              }
+              next();
+              reset(select);
+              next();
+              reset(div_4);
+              next();
+              template_effect(() => select.disabled = get(status) === "running");
+              bind_select_value(select, () => get(selectedCliTool), ($$value) => set(selectedCliTool, $$value));
+              append($$anchor4, fragment_6);
+            };
+            if_block(node_4, ($$render) => {
+              if (get(executionMode) === "cli")
+                $$render(consequent_6);
+            });
+          }
+          next();
+          reset(div_2);
+          var p = sibling(div_2, 2);
+          var node_8 = sibling(child(p));
+          {
+            var consequent_7 = ($$anchor4) => {
+              var text_3 = text(`
+          Uses your Anthropic API key to call Claude directly.
+        `);
+              append($$anchor4, text_3);
+            };
+            var alternate = ($$anchor4) => {
+              var text_4 = text();
+              template_effect(() => set_text(text_4, `
+          Uses ${get(selectedCliTool) === "claude" ? "Claude Code" : get(selectedCliTool) === "opencode" ? "OpenCode" : "Aider"} CLI for execution. No API key required.
+        `));
+              append($$anchor4, text_4);
+            };
+            if_block(node_8, ($$render) => {
+              if (get(executionMode) === "api")
+                $$render(consequent_7);
+              else
+                $$render(alternate, false);
+            });
+          }
+          next();
+          reset(p);
+          next();
+          reset(div_1);
+          var div_5 = sibling(div_1, 2);
+          var textarea = sibling(child(div_5), 3);
+          remove_textarea_child(textarea);
+          var div_6 = sibling(textarea, 2);
+          var div_7 = sibling(child(div_6));
+          var span = sibling(child(div_7));
+          var text_5 = child(span);
+          reset(span);
+          next(3);
+          reset(div_7);
+          var div_8 = sibling(div_7, 2);
+          var node_9 = sibling(child(div_8));
+          {
+            var consequent_8 = ($$anchor4) => {
+              var fragment_11 = root_124();
+              var button_2 = sibling(first_child(fragment_11));
+              button_2.__click = cancelExecution;
+              var text_6 = child(button_2);
+              reset(button_2);
+              next();
+              template_effect(() => {
+                button_2.disabled = get(cancelRequested);
+                set_text(text_6, `
+              ${get(cancelRequested) ? "Cancelling..." : "Cancel"}
+            `);
+              });
+              append($$anchor4, fragment_11);
+            };
+            var alternate_1 = ($$anchor4) => {
+              var fragment_12 = comment();
+              var node_10 = first_child(fragment_12);
+              {
+                var consequent_9 = ($$anchor5) => {
+                  var fragment_13 = root_142();
+                  var button_3 = sibling(first_child(fragment_13));
+                  button_3.__click = reset2;
+                  next();
+                  append($$anchor5, fragment_13);
+                };
+                if_block(node_10, ($$render) => {
+                  if (get(status) === "completed" || get(status) === "failed")
+                    $$render(consequent_9);
+                }, true);
+              }
+              append($$anchor4, fragment_12);
+            };
+            if_block(node_9, ($$render) => {
+              if (get(status) === "running")
+                $$render(consequent_8);
+              else
+                $$render(alternate_1, false);
+            });
+          }
+          var button_4 = sibling(node_9, 2);
+          button_4.__click = runPipeline;
+          var node_11 = sibling(child(button_4));
+          {
+            var consequent_10 = ($$anchor4) => {
+              var fragment_14 = root_152();
+              next(2);
+              append($$anchor4, fragment_14);
+            };
+            var alternate_2 = ($$anchor4) => {
+              var text_7 = text(`
+              Run Pipeline ▶
+            `);
+              append($$anchor4, text_7);
+            };
+            if_block(node_11, ($$render) => {
+              if (get(status) === "running")
+                $$render(consequent_10);
+              else
+                $$render(alternate_2, false);
+            });
+          }
+          next();
+          reset(button_4);
+          next();
+          reset(div_8);
+          next();
+          reset(div_6);
+          next();
+          reset(div_5);
+          var node_12 = sibling(div_5, 2);
+          {
+            var consequent_11 = ($$anchor4) => {
+              var fragment_15 = root_172();
+              var div_9 = sibling(first_child(fragment_15));
+              var div_10 = sibling(child(div_9));
+              var div_11 = sibling(child(div_10), 3);
+              var div_12 = sibling(child(div_11), 3);
+              var text_8 = child(div_12, true);
+              reset(div_12);
+              var button_5 = sibling(div_12, 2);
+              button_5.__click = runPipeline;
+              next();
+              reset(div_11);
+              next();
+              reset(div_10);
+              next();
+              reset(div_9);
+              next();
+              template_effect(() => set_text(text_8, get(error)));
+              append($$anchor4, fragment_15);
+            };
+            if_block(node_12, ($$render) => {
+              if (get(error))
+                $$render(consequent_11);
+            });
+          }
+          next();
+          reset(div);
+          var node_13 = sibling(div, 2);
+          {
+            var consequent_12 = ($$anchor4) => {
+              var fragment_16 = root_18();
+              var node_14 = sibling(first_child(fragment_16));
+              ExecutionHistory_default(node_14, {});
+              next();
+              append($$anchor4, fragment_16);
+            };
+            if_block(node_13, ($$render) => {
+              if (get(status) === "idle")
+                $$render(consequent_12);
+            });
+          }
+          next();
+          template_effect(($0) => {
+            button.disabled = !get(config)?.hasApiKey || get(status) === "running";
+            set_class(button, 1, `px-3 py-1.5 text-sm rounded-lg transition-colors ${get(executionMode) === "api" ? "bg-blue-600 text-white" : "bg-white border border-slate-300 text-slate-600 hover:bg-slate-50"} disabled:opacity-50 disabled:cursor-not-allowed`);
+            button_1.disabled = !get(config)?.cliTools.claude.available && !get(config)?.cliTools.opencode.available && !get(config)?.cliTools.aider.available || get(status) === "running";
+            set_class(button_1, 1, `px-3 py-1.5 text-sm rounded-lg transition-colors ${get(executionMode) === "cli" ? "bg-blue-600 text-white" : "bg-white border border-slate-300 text-slate-600 hover:bg-slate-50"} disabled:opacity-50 disabled:cursor-not-allowed`);
+            textarea.disabled = get(status) === "running";
+            set_text(text_5, `${get(input).length ?? ""} characters`);
+            button_4.disabled = $0;
+          }, [
+            () => get(status) === "running" || !get(input).trim() || !get(canExecute)()
+          ]);
+          bind_value(textarea, () => get(input), ($$value) => set(input, $$value));
+          append($$anchor3, fragment_4);
+        };
+        if_block(node_1, ($$render) => {
+          if (!get(canExecute)())
+            $$render(consequent_1);
+          else
+            $$render(alternate_3, false);
+        }, true);
+      }
+      append($$anchor2, fragment_2);
+    };
+    if_block(node, ($$render) => {
+      if (get(configStatus) === "checking")
+        $$render(consequent);
+      else
+        $$render(alternate_4, false);
+    });
+  }
+  var node_15 = sibling(node, 2);
+  {
+    var consequent_13 = ($$anchor2) => {
+      var fragment_17 = root_192();
+      var node_16 = sibling(first_child(fragment_17));
+      ExecutionProgress_default(node_16, {
+        get executionId() {
+          return get(executionId);
+        },
+        get stageCount() {
+          return $$props.stageCount;
+        },
+        onComplete: handleComplete
+      });
+      next();
+      append($$anchor2, fragment_17);
+    };
+    if_block(node_15, ($$render) => {
+      if (get(executionId))
+        $$render(consequent_13);
+    });
+  }
+  var node_17 = sibling(node_15, 2);
+  {
+    var consequent_14 = ($$anchor2) => {
+      var fragment_18 = root_20();
+      var div_13 = sibling(first_child(fragment_18));
+      var node_18 = sibling(child(div_13));
+      ExecutionResult_default(node_18, {
+        get result() {
+          return get(result);
+        }
+      });
+      next();
+      reset(div_13);
+      next();
+      append($$anchor2, fragment_18);
+    };
+    if_block(node_17, ($$render) => {
+      if (get(result))
+        $$render(consequent_14);
+    });
+  }
+  append($$anchor, fragment);
+  pop();
+}
+if (undefined) {}
+var ExecutionForm_default = ExecutionForm;
+delegate(["click"]);
+
+// web/components/pipelines/PipelineDetail.svelte
+var root_112 = from_html(`
     <div class="flex items-center justify-center h-64">
       <div class="text-slate-500">Loading pipeline...</div>
     </div>
   `, 1);
-var root_33 = from_html(`
+var root_37 = from_html(`
     <div class="bg-red-50 text-red-600 p-4 rounded-lg"> </div>
   `, 1);
-var root_63 = from_html(`
+var root_66 = from_html(`
         <p class="text-slate-600 mt-4"> </p>
       `, 1);
-var root_7 = from_html(`
+var root_74 = from_html(`
           <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">Caching</span>
         `, 1);
-var root_8 = from_html(`
+var root_83 = from_html(`
           <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">Early Exit</span>
         `, 1);
-var root_9 = from_html(`
+var root_93 = from_html(`
           <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded"> </span>
         `, 1);
-var root_11 = from_html(`
+var root_113 = from_html(`
             <div class="absolute left-6 -top-4 w-0.5 h-4 bg-slate-300"></div>
           `, 1);
-var root_122 = from_html(`
+var root_125 = from_html(`
                 <span class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">Conditional</span>
               `, 1);
-var root_142 = from_html(`
+var root_143 = from_html(`
                   <p class="text-sm text-slate-600 mb-4"> </p>
                 `, 1);
-var root_17 = from_html(`
+var root_173 = from_html(`
                               <span class="text-slate-400"> </span>
                             `, 1);
-var root_18 = from_html(`
+var root_182 = from_html(`
                               <span class="text-slate-400"> </span>
                             `, 1);
-var root_16 = from_html(`
+var root_162 = from_html(`
                         <div class="p-2 text-sm flex items-center gap-2">
                           <code class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-xs"> </code>
                           <span class="text-slate-400">←</span>
@@ -5005,7 +7299,7 @@ var root_16 = from_html(`
                           </span>
                         </div>
                       `, 1);
-var root_15 = from_html(`
+var root_153 = from_html(`
                   <div class="mb-4">
                     <h4 class="text-xs font-semibold text-slate-500 uppercase mb-2">Variables</h4>
                     <div class="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100">
@@ -5013,26 +7307,26 @@ var root_15 = from_html(`
                     </div>
                   </div>
                 `, 1);
-var root_20 = from_html(`<span class="text-green-500">*</span>`);
-var root_19 = from_html(`
+var root_202 = from_html(`<span class="text-green-500">*</span>`);
+var root_193 = from_html(`
                         <span class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200"> <!>
                         </span>
                       `, 1);
-var root_22 = from_html(`
+var root_222 = from_html(`
                         <div class="mb-1">
                           <span class="font-medium text-amber-700">Skip if:</span>
                           <code class="ml-2 text-xs"> </code>
                           <span class="text-slate-500"> </span>
                         </div>
                       `, 1);
-var root_23 = from_html(`
+var root_232 = from_html(`
                         <div class="mb-1">
                           <span class="font-medium text-amber-700">Run if:</span>
                           <code class="ml-2 text-xs"> </code>
                           <span class="text-slate-500"> </span>
                         </div>
                       `, 1);
-var root_24 = from_html(`
+var root_242 = from_html(`
                         <div>
                           <span class="font-medium text-amber-700">Early exit:</span>
                           <code class="ml-2 text-xs"> </code>
@@ -5049,7 +7343,7 @@ var root_21 = from_html(`
                     </div>
                   </div>
                 `, 1);
-var root_132 = from_html(`
+var root_133 = from_html(`
               <div class="border-t border-slate-200 p-4 bg-slate-50">
                 <!>
 
@@ -5094,7 +7388,7 @@ var root_132 = from_html(`
 var root_25 = from_html(`
             <div class="absolute left-6 -bottom-4 w-0.5 h-4 bg-slate-300"></div>
           `, 1);
-var root_10 = from_html(`
+var root_103 = from_html(`
         <div class="relative">
           <!>
 
@@ -5121,7 +7415,7 @@ var root_10 = from_html(`
           <!>
         </div>
       `, 1);
-var root_53 = from_html(`
+var root_57 = from_html(`
     <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-6">
       <div class="flex items-start justify-between">
         <div>
@@ -5139,13 +7433,15 @@ var root_53 = from_html(`
       </div>
     </div>
 
+    <!>
+
     <div class="space-y-4">
       <h2 class="font-semibold text-slate-700 mb-4">Pipeline Stages</h2>
 
       <!>
     </div>
   `, 1);
-var root4 = from_html(`
+var root9 = from_html(`
 
 <div>
   <button class="text-slate-500 hover:text-slate-700 mb-4 flex items-center gap-1">
@@ -5211,14 +7507,14 @@ function PipelineDetail($$anchor, $$props) {
     return modelId;
   }
   next();
-  var fragment = root4();
+  var fragment = root9();
   var div = sibling(first_child(fragment));
   var button = sibling(child(div));
   button.__click = () => $$props.navigate("/pipelines");
   var node = sibling(button, 2);
   {
     var consequent = ($$anchor2) => {
-      var fragment_1 = root_14();
+      var fragment_1 = root_112();
       next(2);
       append($$anchor2, fragment_1);
     };
@@ -5227,7 +7523,7 @@ function PipelineDetail($$anchor, $$props) {
       var node_1 = first_child(fragment_2);
       {
         var consequent_1 = ($$anchor3) => {
-          var fragment_3 = root_33();
+          var fragment_3 = root_37();
           var div_1 = sibling(first_child(fragment_3));
           var text2 = child(div_1, true);
           reset(div_1);
@@ -5240,7 +7536,7 @@ function PipelineDetail($$anchor, $$props) {
           var node_2 = first_child(fragment_4);
           {
             var consequent_19 = ($$anchor4) => {
-              var fragment_5 = root_53();
+              var fragment_5 = root_57();
               var div_2 = sibling(first_child(fragment_5));
               var div_3 = sibling(child(div_2));
               var div_4 = sibling(child(div_3));
@@ -5257,7 +7553,7 @@ function PipelineDetail($$anchor, $$props) {
               var node_3 = sibling(div_3, 2);
               {
                 var consequent_2 = ($$anchor5) => {
-                  var fragment_6 = root_63();
+                  var fragment_6 = root_66();
                   var p_1 = sibling(first_child(fragment_6));
                   var text_3 = child(p_1, true);
                   reset(p_1);
@@ -5274,7 +7570,7 @@ function PipelineDetail($$anchor, $$props) {
               var node_4 = sibling(child(div_5));
               {
                 var consequent_3 = ($$anchor5) => {
-                  var fragment_7 = root_7();
+                  var fragment_7 = root_74();
                   next(2);
                   append($$anchor5, fragment_7);
                 };
@@ -5286,7 +7582,7 @@ function PipelineDetail($$anchor, $$props) {
               var node_5 = sibling(node_4, 2);
               {
                 var consequent_4 = ($$anchor5) => {
-                  var fragment_8 = root_8();
+                  var fragment_8 = root_83();
                   next(2);
                   append($$anchor5, fragment_8);
                 };
@@ -5298,7 +7594,7 @@ function PipelineDetail($$anchor, $$props) {
               var node_6 = sibling(node_5, 2);
               {
                 var consequent_5 = ($$anchor5) => {
-                  var fragment_9 = root_9();
+                  var fragment_9 = root_93();
                   var span = sibling(first_child(fragment_9));
                   var text_4 = child(span);
                   reset(span);
@@ -5317,25 +7613,37 @@ function PipelineDetail($$anchor, $$props) {
               reset(div_5);
               next();
               reset(div_2);
-              var div_6 = sibling(div_2, 2);
-              var node_7 = sibling(child(div_6), 3);
-              each(node_7, 17, () => get(pipeline).stages, index, ($$anchor5, stage, index2) => {
+              var node_7 = sibling(div_2, 2);
+              ExecutionForm_default(node_7, {
+                get pipelineId() {
+                  return get(pipeline).pipeline.id;
+                },
+                get pipelineName() {
+                  return get(pipeline).pipeline.name;
+                },
+                get stageCount() {
+                  return get(pipeline).stages.length;
+                }
+              });
+              var div_6 = sibling(node_7, 2);
+              var node_8 = sibling(child(div_6), 3);
+              each(node_8, 17, () => get(pipeline).stages, index, ($$anchor5, stage, index2) => {
                 next();
-                var fragment_10 = root_10();
+                var fragment_10 = root_103();
                 var div_7 = sibling(first_child(fragment_10));
-                var node_8 = sibling(child(div_7));
+                var node_9 = sibling(child(div_7));
                 {
                   var consequent_6 = ($$anchor6) => {
-                    var fragment_11 = root_11();
+                    var fragment_11 = root_113();
                     next(2);
                     append($$anchor6, fragment_11);
                   };
-                  if_block(node_8, ($$render) => {
+                  if_block(node_9, ($$render) => {
                     if (index2 > 0)
                       $$render(consequent_6);
                   });
                 }
-                var div_8 = sibling(node_8, 2);
+                var div_8 = sibling(node_9, 2);
                 var button_1 = sibling(child(div_8));
                 button_1.__click = () => toggleStage(get(stage).id);
                 var div_9 = sibling(child(button_1));
@@ -5357,32 +7665,32 @@ function PipelineDetail($$anchor, $$props) {
                 reset(div_12);
                 next();
                 reset(div_10);
-                var node_9 = sibling(div_10, 2);
+                var node_10 = sibling(div_10, 2);
                 {
                   var consequent_7 = ($$anchor6) => {
-                    var fragment_12 = root_122();
+                    var fragment_12 = root_125();
                     next(2);
                     append($$anchor6, fragment_12);
                   };
-                  if_block(node_9, ($$render) => {
+                  if_block(node_10, ($$render) => {
                     if (get(stage).conditions?.skipIf || get(stage).conditions?.runIf || get(stage).conditions?.earlyExit)
                       $$render(consequent_7);
                   });
                 }
-                var span_3 = sibling(node_9, 2);
+                var span_3 = sibling(node_10, 2);
                 var text_8 = child(span_3, true);
                 reset(span_3);
                 next();
                 reset(button_1);
-                var node_10 = sibling(button_1, 2);
+                var node_11 = sibling(button_1, 2);
                 {
                   var consequent_17 = ($$anchor6) => {
-                    var fragment_13 = root_132();
+                    var fragment_13 = root_133();
                     var div_13 = sibling(first_child(fragment_13));
-                    var node_11 = sibling(child(div_13));
+                    var node_12 = sibling(child(div_13));
                     {
                       var consequent_8 = ($$anchor7) => {
-                        var fragment_14 = root_142();
+                        var fragment_14 = root_143();
                         var p_2 = sibling(first_child(fragment_14));
                         var text_9 = child(p_2, true);
                         reset(p_2);
@@ -5390,12 +7698,12 @@ function PipelineDetail($$anchor, $$props) {
                         template_effect(() => set_text(text_9, get(stage).description));
                         append($$anchor7, fragment_14);
                       };
-                      if_block(node_11, ($$render) => {
+                      if_block(node_12, ($$render) => {
                         if (get(stage).description)
                           $$render(consequent_8);
                       });
                     }
-                    var div_14 = sibling(node_11, 2);
+                    var div_14 = sibling(node_12, 2);
                     var div_15 = sibling(child(div_14), 3);
                     var div_16 = sibling(child(div_15));
                     var div_17 = sibling(child(div_16));
@@ -5431,26 +7739,26 @@ function PipelineDetail($$anchor, $$props) {
                     reset(pre_1);
                     next();
                     reset(div_23);
-                    var node_12 = sibling(div_23, 2);
+                    var node_13 = sibling(div_23, 2);
                     {
                       var consequent_11 = ($$anchor7) => {
-                        var fragment_15 = root_15();
+                        var fragment_15 = root_153();
                         var div_24 = sibling(first_child(fragment_15));
                         var div_25 = sibling(child(div_24), 3);
-                        var node_13 = sibling(child(div_25));
-                        each(node_13, 17, () => get(stage).prompt.variables, index, ($$anchor8, variable) => {
+                        var node_14 = sibling(child(div_25));
+                        each(node_14, 17, () => get(stage).prompt.variables, index, ($$anchor8, variable) => {
                           next();
-                          var fragment_16 = root_16();
+                          var fragment_16 = root_162();
                           var div_26 = sibling(first_child(fragment_16));
                           var code = sibling(child(div_26));
                           var text_17 = child(code, true);
                           reset(code);
                           var span_4 = sibling(code, 4);
                           var text_18 = child(span_4);
-                          var node_14 = sibling(text_18);
+                          var node_15 = sibling(text_18);
                           {
                             var consequent_9 = ($$anchor9) => {
-                              var fragment_17 = root_17();
+                              var fragment_17 = root_173();
                               var span_5 = sibling(first_child(fragment_17));
                               var text_19 = child(span_5);
                               reset(span_5);
@@ -5458,15 +7766,15 @@ function PipelineDetail($$anchor, $$props) {
                               template_effect(() => set_text(text_19, `(${get(variable).stageId ?? ""})`));
                               append($$anchor9, fragment_17);
                             };
-                            if_block(node_14, ($$render) => {
+                            if_block(node_15, ($$render) => {
                               if (get(variable).stageId)
                                 $$render(consequent_9);
                             });
                           }
-                          var node_15 = sibling(node_14, 2);
+                          var node_16 = sibling(node_15, 2);
                           {
                             var consequent_10 = ($$anchor9) => {
-                              var fragment_18 = root_18();
+                              var fragment_18 = root_182();
                               var span_6 = sibling(first_child(fragment_18));
                               var text_20 = child(span_6);
                               reset(span_6);
@@ -5474,7 +7782,7 @@ function PipelineDetail($$anchor, $$props) {
                               template_effect(() => set_text(text_20, `.${get(variable).path ?? ""}`));
                               append($$anchor9, fragment_18);
                             };
-                            if_block(node_15, ($$render) => {
+                            if_block(node_16, ($$render) => {
                               if (get(variable).path)
                                 $$render(consequent_10);
                             });
@@ -5499,30 +7807,30 @@ function PipelineDetail($$anchor, $$props) {
                         next();
                         append($$anchor7, fragment_15);
                       };
-                      if_block(node_12, ($$render) => {
+                      if_block(node_13, ($$render) => {
                         if (get(stage).prompt.variables?.length)
                           $$render(consequent_11);
                       });
                     }
-                    var div_27 = sibling(node_12, 2);
+                    var div_27 = sibling(node_13, 2);
                     var div_28 = sibling(child(div_27), 3);
                     var div_29 = sibling(child(div_28));
                     var text_21 = sibling(child(div_29));
                     reset(div_29);
                     var div_30 = sibling(div_29, 2);
-                    var node_16 = sibling(child(div_30));
-                    each(node_16, 17, () => get(stage).output.extract || [], index, ($$anchor7, field) => {
+                    var node_17 = sibling(child(div_30));
+                    each(node_17, 17, () => get(stage).output.extract || [], index, ($$anchor7, field) => {
                       next();
-                      var fragment_19 = root_19();
+                      var fragment_19 = root_193();
                       var span_7 = sibling(first_child(fragment_19));
                       var text_22 = child(span_7);
-                      var node_17 = sibling(text_22);
+                      var node_18 = sibling(text_22);
                       {
                         var consequent_12 = ($$anchor8) => {
-                          var span_8 = root_20();
+                          var span_8 = root_202();
                           append($$anchor8, span_8);
                         };
-                        if_block(node_17, ($$render) => {
+                        if_block(node_18, ($$render) => {
                           if (get(field).required)
                             $$render(consequent_12);
                         });
@@ -5540,16 +7848,16 @@ function PipelineDetail($$anchor, $$props) {
                     reset(div_28);
                     next();
                     reset(div_27);
-                    var node_18 = sibling(div_27, 2);
+                    var node_19 = sibling(div_27, 2);
                     {
                       var consequent_16 = ($$anchor7) => {
                         var fragment_20 = root_21();
                         var div_31 = sibling(first_child(fragment_20));
                         var div_32 = sibling(child(div_31), 3);
-                        var node_19 = sibling(child(div_32));
+                        var node_20 = sibling(child(div_32));
                         {
                           var consequent_13 = ($$anchor8) => {
-                            var fragment_21 = root_22();
+                            var fragment_21 = root_222();
                             var div_33 = sibling(first_child(fragment_21));
                             var code_1 = sibling(child(div_33), 3);
                             var text_23 = child(code_1, true);
@@ -5568,15 +7876,15 @@ function PipelineDetail($$anchor, $$props) {
                             ]);
                             append($$anchor8, fragment_21);
                           };
-                          if_block(node_19, ($$render) => {
+                          if_block(node_20, ($$render) => {
                             if (get(stage).conditions.skipIf)
                               $$render(consequent_13);
                           });
                         }
-                        var node_20 = sibling(node_19, 2);
+                        var node_21 = sibling(node_20, 2);
                         {
                           var consequent_14 = ($$anchor8) => {
-                            var fragment_22 = root_23();
+                            var fragment_22 = root_232();
                             var div_34 = sibling(first_child(fragment_22));
                             var code_2 = sibling(child(div_34), 3);
                             var text_25 = child(code_2, true);
@@ -5595,15 +7903,15 @@ function PipelineDetail($$anchor, $$props) {
                             ]);
                             append($$anchor8, fragment_22);
                           };
-                          if_block(node_20, ($$render) => {
+                          if_block(node_21, ($$render) => {
                             if (get(stage).conditions.runIf)
                               $$render(consequent_14);
                           });
                         }
-                        var node_21 = sibling(node_20, 2);
+                        var node_22 = sibling(node_21, 2);
                         {
                           var consequent_15 = ($$anchor8) => {
-                            var fragment_23 = root_24();
+                            var fragment_23 = root_242();
                             var div_35 = sibling(first_child(fragment_23));
                             var code_3 = sibling(child(div_35), 3);
                             var text_27 = child(code_3, true);
@@ -5622,7 +7930,7 @@ function PipelineDetail($$anchor, $$props) {
                             ]);
                             append($$anchor8, fragment_23);
                           };
-                          if_block(node_21, ($$render) => {
+                          if_block(node_22, ($$render) => {
                             if (get(stage).conditions.earlyExit)
                               $$render(consequent_15);
                           });
@@ -5634,7 +7942,7 @@ function PipelineDetail($$anchor, $$props) {
                         next();
                         append($$anchor7, fragment_20);
                       };
-                      if_block(node_18, ($$render) => {
+                      if_block(node_19, ($$render) => {
                         if (get(stage).conditions?.skipIf || get(stage).conditions?.runIf || get(stage).conditions?.earlyExit)
                           $$render(consequent_16);
                       });
@@ -5654,21 +7962,21 @@ function PipelineDetail($$anchor, $$props) {
                     });
                     append($$anchor6, fragment_13);
                   };
-                  if_block(node_10, ($$render) => {
+                  if_block(node_11, ($$render) => {
                     if (get(expandedStage) === get(stage).id)
                       $$render(consequent_17);
                   });
                 }
                 next();
                 reset(div_8);
-                var node_22 = sibling(div_8, 2);
+                var node_23 = sibling(div_8, 2);
                 {
                   var consequent_18 = ($$anchor6) => {
                     var fragment_24 = root_25();
                     next(2);
                     append($$anchor6, fragment_24);
                   };
-                  if_block(node_22, ($$render) => {
+                  if_block(node_23, ($$render) => {
                     if (index2 < get(pipeline).stages.length - 1)
                       $$render(consequent_18);
                   });
@@ -5734,7 +8042,7 @@ var PipelineDetail_default = PipelineDetail;
 delegate(["click"]);
 
 // web/components/outputs/OutputList.svelte
-var root_110 = from_html(`
+var root_114 = from_html(`
         <option> </option>
       `, 1);
 var root_26 = from_html(`
@@ -5742,17 +8050,17 @@ var root_26 = from_html(`
       <div class="text-slate-500">Loading outputs...</div>
     </div>
   `, 1);
-var root_43 = from_html(`
+var root_45 = from_html(`
     <div class="bg-red-50 text-red-600 p-4 rounded-lg"> </div>
   `, 1);
-var root_64 = from_html(`
+var root_67 = from_html(`
     <div class="text-center py-12 text-slate-500">
       <p class="text-4xl mb-4">\uD83D\uDCED</p>
       <p>No outputs found</p>
       <p class="text-sm mt-2">Run a pipeline to see results here</p>
     </div>
   `, 1);
-var root_92 = from_html(`
+var root_94 = from_html(`
             <button class="w-full bg-white rounded-xl p-4 shadow-sm border border-slate-200 text-left hover:shadow-md hover:border-slate-300 transition-all">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-3">
@@ -5778,7 +8086,7 @@ var root_92 = from_html(`
               </div>
             </button>
           `, 1);
-var root_82 = from_html(`
+var root_84 = from_html(`
       <div class="mb-6">
         <h2 class="text-sm font-semibold text-slate-500 mb-3"> </h2>
 
@@ -5787,10 +8095,10 @@ var root_82 = from_html(`
         </div>
       </div>
     `, 1);
-var root_72 = from_html(`
+var root_75 = from_html(`
     <!>
   `, 1);
-var root5 = from_html(`
+var root10 = from_html(`
 
 <div>
   <div class="mb-6 flex items-center justify-between">
@@ -5857,7 +8165,7 @@ function OutputList($$anchor, $$props) {
   }
   let groupedOutputs = user_derived(() => getGroupedOutputs(get(filteredOutputs)));
   next();
-  var fragment = root5();
+  var fragment = root10();
   var div = sibling(first_child(fragment));
   var div_1 = sibling(child(div));
   var select = sibling(child(div_1), 3);
@@ -5866,7 +8174,7 @@ function OutputList($$anchor, $$props) {
   var node = sibling(option, 2);
   each(node, 17, () => get(pipelineIds), index, ($$anchor2, pid) => {
     next();
-    var fragment_1 = root_110();
+    var fragment_1 = root_114();
     var option_1 = sibling(first_child(fragment_1));
     var text2 = child(option_1, true);
     reset(option_1);
@@ -5896,7 +8204,7 @@ function OutputList($$anchor, $$props) {
       var node_2 = first_child(fragment_3);
       {
         var consequent_1 = ($$anchor3) => {
-          var fragment_4 = root_43();
+          var fragment_4 = root_45();
           var div_2 = sibling(first_child(fragment_4));
           var text_1 = child(div_2, true);
           reset(div_2);
@@ -5909,19 +8217,19 @@ function OutputList($$anchor, $$props) {
           var node_3 = first_child(fragment_5);
           {
             var consequent_2 = ($$anchor4) => {
-              var fragment_6 = root_64();
+              var fragment_6 = root_67();
               next(2);
               append($$anchor4, fragment_6);
             };
             var alternate_2 = ($$anchor4) => {
-              var fragment_7 = root_72();
+              var fragment_7 = root_75();
               var node_4 = sibling(first_child(fragment_7));
               each(node_4, 17, () => Object.entries(get(groupedOutputs)), index, ($$anchor5, $$item) => {
                 var $$array = user_derived(() => to_array(get($$item), 2));
                 let date = () => get($$array)[0];
                 let dateOutputs = () => get($$array)[1];
                 next();
-                var fragment_8 = root_82();
+                var fragment_8 = root_84();
                 var div_3 = sibling(first_child(fragment_8));
                 var h2 = sibling(child(div_3));
                 var text_2 = child(h2, true);
@@ -5930,7 +8238,7 @@ function OutputList($$anchor, $$props) {
                 var node_5 = sibling(child(div_4));
                 each(node_5, 17, dateOutputs, index, ($$anchor6, output) => {
                   next();
-                  var fragment_9 = root_92();
+                  var fragment_9 = root_94();
                   var button = sibling(first_child(fragment_9));
                   button.__click = () => $$props.navigate(`/outputs/${get(output).filename}`);
                   var div_5 = sibling(child(button));
@@ -6106,33 +8414,33 @@ var OutputList_default = OutputList;
 delegate(["click"]);
 
 // web/components/outputs/OutputDetail.svelte
-var root_112 = from_html(`
+var root_116 = from_html(`
     <div class="flex items-center justify-center h-64">
       <div class="text-slate-500">Loading output...</div>
     </div>
   `, 1);
-var root_34 = from_html(`
+var root_38 = from_html(`
     <div class="bg-red-50 text-red-600 p-4 rounded-lg"> </div>
   `, 1);
-var root_152 = from_html(`
+var root_154 = from_html(`
                   <div class="text-xs text-slate-500 mt-0.5"> </div>
                 `, 1);
-var root_172 = from_html(`
+var root_174 = from_html(`
                   <div class="text-sm text-slate-500"> </div>
                 `, 1);
-var root_182 = from_html(`
+var root_183 = from_html(`
                 <div class="text-xs text-slate-500"> </div>
               `, 1);
-var root_202 = from_html(`
+var root_203 = from_html(`
                   <pre class="text-xs whitespace-pre-wrap bg-slate-800 text-slate-100 p-4 rounded-lg overflow-x-auto max-h-96"> </pre>
                 `, 1);
-var root_222 = from_html(`
+var root_223 = from_html(`
                   <pre class="text-xs whitespace-pre-wrap bg-slate-800 text-slate-100 p-4 rounded-lg overflow-x-auto max-h-96"> </pre>
                 `, 1);
-var root_232 = from_html(`
+var root_233 = from_html(`
                   <p class="text-sm text-slate-500">No parsed output available</p>
                 `, 1);
-var root_192 = from_html(`
+var root_194 = from_html(`
               <div class="px-4 pb-4 bg-slate-50">
                 <div class="flex gap-2 mb-3">
                   <button>
@@ -6151,12 +8459,12 @@ var root_192 = from_html(`
                 </div>
               </div>
             `, 1);
-var root_242 = from_html(`
+var root_243 = from_html(`
               <div class="px-4 pb-4 bg-red-50">
                 <pre class="text-xs whitespace-pre-wrap text-red-700"> </pre>
               </div>
             `, 1);
-var root_83 = from_html(`
+var root_85 = from_html(`
           <div>
             <button class="w-full p-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors">
               <span class="text-xl">
@@ -6180,7 +8488,7 @@ var root_83 = from_html(`
             <!>
           </div>
         `, 1);
-var root_54 = from_html(`
+var root_58 = from_html(`
     <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 mb-6">
       <div class="flex items-start justify-between mb-4">
         <div>
@@ -6248,7 +8556,7 @@ var root_54 = from_html(`
       </div>
     </div>
   `, 1);
-var root6 = from_html(`
+var root11 = from_html(`
 
 <div>
   <button class="text-slate-500 hover:text-slate-700 mb-4 flex items-center gap-1">
@@ -6337,16 +8645,32 @@ function OutputDetail($$anchor, $$props) {
       return "Gemini";
     return modelId;
   }
+  function formatAnyOutput(val) {
+    if (!val)
+      return "";
+    if (typeof val === "object") {
+      return JSON.stringify(val, null, 2);
+    }
+    if (typeof val === "string") {
+      try {
+        const parsed = JSON.parse(val);
+        return JSON.stringify(parsed, null, 2);
+      } catch {
+        return val;
+      }
+    }
+    return String(val);
+  }
   function getFinalOutput() {
     if (!get(output))
       return "";
     const out = get(output).output;
     if (out.optimizedPrompt)
-      return out.optimizedPrompt;
+      return String(out.optimizedPrompt);
     if (out.refinedPrompt)
-      return out.refinedPrompt;
+      return String(out.refinedPrompt);
     if (out.enhancedPrompt)
-      return out.enhancedPrompt;
+      return String(out.enhancedPrompt);
     if (out["stage-3-generate"]?.pipelineConfig) {
       return JSON.stringify(out["stage-3-generate"].pipelineConfig, null, 2);
     }
@@ -6359,14 +8683,14 @@ function OutputDetail($$anchor, $$props) {
     setTimeout(() => set(copied, false), 2000);
   }
   next();
-  var fragment = root6();
+  var fragment = root11();
   var div = sibling(first_child(fragment));
   var button = sibling(child(div));
   button.__click = () => $$props.navigate("/outputs");
   var node = sibling(button, 2);
   {
     var consequent = ($$anchor2) => {
-      var fragment_1 = root_112();
+      var fragment_1 = root_116();
       next(2);
       append($$anchor2, fragment_1);
     };
@@ -6375,7 +8699,7 @@ function OutputDetail($$anchor, $$props) {
       var node_1 = first_child(fragment_2);
       {
         var consequent_1 = ($$anchor3) => {
-          var fragment_3 = root_34();
+          var fragment_3 = root_38();
           var div_1 = sibling(first_child(fragment_3));
           var text_1 = child(div_1, true);
           reset(div_1);
@@ -6388,7 +8712,7 @@ function OutputDetail($$anchor, $$props) {
           var node_2 = first_child(fragment_4);
           {
             var consequent_13 = ($$anchor4) => {
-              var fragment_5 = root_54();
+              var fragment_5 = root_58();
               var div_2 = sibling(first_child(fragment_5));
               var div_3 = sibling(child(div_2));
               var div_4 = sibling(child(div_3));
@@ -6481,7 +8805,7 @@ function OutputDetail($$anchor, $$props) {
               var node_4 = sibling(child(div_20));
               each(node_4, 17, () => get(output).stages, index, ($$anchor5, stage, index2) => {
                 next();
-                var fragment_6 = root_83();
+                var fragment_6 = root_85();
                 var div_21 = sibling(first_child(fragment_6));
                 var button_1 = sibling(child(div_21));
                 button_1.__click = () => toggleStage(get(stage).stageId);
@@ -6558,7 +8882,7 @@ function OutputDetail($$anchor, $$props) {
                 var node_8 = sibling(div_24, 2);
                 {
                   var consequent_6 = ($$anchor6) => {
-                    var fragment_9 = root_152();
+                    var fragment_9 = root_154();
                     var div_25 = sibling(first_child(fragment_9));
                     var text_18 = child(div_25, true);
                     reset(div_25);
@@ -6571,7 +8895,7 @@ function OutputDetail($$anchor, $$props) {
                     var node_9 = first_child(fragment_10);
                     {
                       var consequent_7 = ($$anchor7) => {
-                        var fragment_11 = root_172();
+                        var fragment_11 = root_174();
                         var div_26 = sibling(first_child(fragment_11));
                         var text_19 = child(div_26);
                         reset(div_26);
@@ -6604,7 +8928,7 @@ function OutputDetail($$anchor, $$props) {
                 var node_10 = sibling(div_23, 2);
                 {
                   var consequent_8 = ($$anchor6) => {
-                    var fragment_12 = root_182();
+                    var fragment_12 = root_183();
                     var div_27 = sibling(first_child(fragment_12));
                     var text_20 = child(div_27);
                     reset(div_27);
@@ -6627,7 +8951,7 @@ function OutputDetail($$anchor, $$props) {
                 var node_11 = sibling(button_1, 2);
                 {
                   var consequent_11 = ($$anchor6) => {
-                    var fragment_13 = root_192();
+                    var fragment_13 = root_194();
                     var div_28 = sibling(first_child(fragment_13));
                     var div_29 = sibling(child(div_28));
                     var button_2 = sibling(child(div_29));
@@ -6639,12 +8963,12 @@ function OutputDetail($$anchor, $$props) {
                     var node_12 = sibling(div_29, 2);
                     {
                       var consequent_9 = ($$anchor7) => {
-                        var fragment_14 = root_202();
+                        var fragment_14 = root_203();
                         var pre_1 = sibling(first_child(fragment_14));
                         var text_22 = child(pre_1, true);
                         reset(pre_1);
                         next();
-                        template_effect(() => set_text(text_22, get(stage).output));
+                        template_effect(($0) => set_text(text_22, $0), [() => formatAnyOutput(get(stage).output)]);
                         append($$anchor7, fragment_14);
                       };
                       var alternate_6 = ($$anchor7) => {
@@ -6652,7 +8976,7 @@ function OutputDetail($$anchor, $$props) {
                         var node_13 = first_child(fragment_15);
                         {
                           var consequent_10 = ($$anchor8) => {
-                            var fragment_16 = root_222();
+                            var fragment_16 = root_223();
                             var pre_2 = sibling(first_child(fragment_16));
                             var text_23 = child(pre_2, true);
                             reset(pre_2);
@@ -6661,7 +8985,7 @@ function OutputDetail($$anchor, $$props) {
                             append($$anchor8, fragment_16);
                           };
                           var alternate_5 = ($$anchor8) => {
-                            var fragment_17 = root_232();
+                            var fragment_17 = root_233();
                             next(2);
                             append($$anchor8, fragment_17);
                           };
@@ -6712,7 +9036,7 @@ function OutputDetail($$anchor, $$props) {
                 var node_14 = sibling(node_11, 2);
                 {
                   var consequent_12 = ($$anchor6) => {
-                    var fragment_18 = root_242();
+                    var fragment_18 = root_243();
                     var div_31 = sibling(first_child(fragment_18));
                     var pre_3 = sibling(child(div_31));
                     var text_26 = child(pre_3, true);
@@ -6820,23 +9144,1714 @@ if (undefined) {}
 var OutputDetail_default = OutputDetail;
 delegate(["click"]);
 
+// web/components/execution/ExecutionCard.svelte
+var root12 = from_html(`
+
+<button class="w-full text-left p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all group">
+  <div class="flex items-start justify-between mb-2">
+    <div class="flex items-center gap-2">
+      <span class="text-lg">\uD83D\uDD27</span>
+      <h3 class="font-medium text-slate-800"> </h3>
+    </div>
+    <span> </span>
+  </div>
+
+  <p class="text-sm text-slate-500 mb-3 line-clamp-1"> </p>
+
+  <div class="flex items-center gap-4">
+    <!-- Progress Bar -->
+    <div class="flex-1">
+      <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div></div>
+      </div>
+    </div>
+
+    <!-- Stage Progress -->
+    <span class="text-xs text-slate-500 shrink-0"> </span>
+
+    <!-- Elapsed Time -->
+    <span class="text-xs text-slate-500 shrink-0 w-16 text-right"> </span>
+
+    <!-- View Arrow -->
+    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+  </div>
+</button>`, 1);
+function ExecutionCard($$anchor, $$props) {
+  push($$props, true);
+  function handleClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("ExecutionCard clicked, execution:", $$props.execution.id);
+    if ($$props.onselect) {
+      $$props.onselect();
+    } else {
+      console.error("onselect is not defined!");
+    }
+  }
+  function formatElapsed(startTime) {
+    const elapsed2 = Date.now() - startTime;
+    const seconds = Math.floor(elapsed2 / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}m`;
+    }
+    if (minutes > 0) {
+      return `${minutes}m ${seconds % 60}s`;
+    }
+    return `${seconds}s`;
+  }
+  function getProgressPercent() {
+    if ($$props.execution.totalStages === 0)
+      return 0;
+    return Math.round($$props.execution.currentStage / $$props.execution.totalStages * 100);
+  }
+  function getStatusColor() {
+    switch ($$props.execution.status) {
+      case "running":
+        return "text-blue-600 bg-blue-50 border-blue-200";
+      case "completed":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "failed":
+        return "text-red-600 bg-red-50 border-red-200";
+      case "cancelled":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      default:
+        return "text-slate-600 bg-slate-50 border-slate-200";
+    }
+  }
+  function getStatusIcon() {
+    switch ($$props.execution.status) {
+      case "running":
+        return "▶";
+      case "completed":
+        return "✓";
+      case "failed":
+        return "✕";
+      case "cancelled":
+        return "⏸";
+      default:
+        return "•";
+    }
+  }
+  let elapsed = state(proxy(formatElapsed($$props.execution.startTime)));
+  user_effect(() => {
+    if ($$props.execution.status !== "running")
+      return;
+    const interval = setInterval(() => {
+      set(elapsed, formatElapsed($$props.execution.startTime), true);
+    }, 1000);
+    return () => clearInterval(interval);
+  });
+  next();
+  var fragment = root12();
+  var button = sibling(first_child(fragment));
+  button.__click = handleClick;
+  var div = sibling(child(button));
+  var div_1 = sibling(child(div));
+  var h3 = sibling(child(div_1), 3);
+  var text2 = child(h3, true);
+  reset(h3);
+  next();
+  reset(div_1);
+  var span = sibling(div_1, 2);
+  var text_1 = child(span);
+  reset(span);
+  next();
+  reset(div);
+  var p = sibling(div, 2);
+  var text_2 = child(p);
+  reset(p);
+  var div_2 = sibling(p, 2);
+  var node = sibling(child(div_2));
+  var div_3 = sibling(node, 2);
+  var div_4 = sibling(child(div_3));
+  var div_5 = sibling(child(div_4));
+  next();
+  reset(div_4);
+  next();
+  reset(div_3);
+  var node_1 = sibling(div_3, 2);
+  var span_1 = sibling(node_1, 2);
+  var text_3 = child(span_1);
+  reset(span_1);
+  var node_2 = sibling(span_1, 2);
+  var span_2 = sibling(node_2, 2);
+  var text_4 = child(span_2);
+  reset(span_2);
+  var node_3 = sibling(span_2, 2);
+  next(3);
+  reset(div_2);
+  next();
+  reset(button);
+  template_effect(($0, $1, $2) => {
+    set_text(text2, $$props.execution.pipelineName);
+    set_class(span, 1, `text-xs px-2 py-1 rounded-full font-medium ${$0 ?? ""}`);
+    set_text(text_1, `
+      ${$1 ?? ""} ${$$props.execution.status ?? ""}
+    `);
+    set_text(text_2, `
+    "${$$props.execution.inputPreview ?? ""}"
+  `);
+    set_class(div_5, 1, `h-full bg-blue-500 transition-all duration-300 ${$$props.execution.status === "running" ? "animate-pulse" : ""}`);
+    set_style(div_5, `width: ${$2 ?? ""}%`);
+    set_text(text_3, `
+      Stage ${$$props.execution.currentStage ?? ""}/${$$props.execution.totalStages ?? ""}
+    `);
+    set_text(text_4, `
+      ${get(elapsed) ?? ""}
+    `);
+  }, [getStatusColor, getStatusIcon, getProgressPercent]);
+  append($$anchor, fragment);
+  pop();
+}
+if (undefined) {}
+var ExecutionCard_default = ExecutionCard;
+delegate(["click"]);
+
+// web/components/execution/HistoryCard.svelte
+var root_117 = from_html(`
+    <div class="mt-2 text-xs text-red-600 truncate pl-12"> </div>
+  `, 1);
+var root13 = from_html(`
+
+<button class="w-full text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all group">
+  <div class="flex items-center gap-4">
+    <!-- Status Icon -->
+    <div>
+      <span class="text-sm"> </span>
+    </div>
+
+    <!-- Pipeline Info -->
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <h3 class="font-medium text-slate-800 truncate"> </h3>
+        <span> </span>
+      </div>
+      <p class="text-xs text-slate-500 truncate mt-0.5"> </p>
+    </div>
+
+    <!-- Stats -->
+    <div class="flex items-center gap-4 shrink-0 text-xs text-slate-500">
+      <div class="text-right">
+        <div class="font-medium text-slate-700"> </div>
+        <div>duration</div>
+      </div>
+      <div class="text-right">
+        <div class="font-medium text-slate-700"> </div>
+        <div>cost</div>
+      </div>
+      <div class="text-right">
+        <div class="font-medium text-slate-700"> </div>
+        <div>stages</div>
+      </div>
+      <div class="text-right w-16">
+        <div class="font-medium text-slate-700"> </div>
+      </div>
+    </div>
+
+    <!-- Arrow -->
+    <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+  </div>
+
+  <!>
+</button>`, 1);
+function HistoryCard($$anchor, $$props) {
+  push($$props, true);
+  function getStatusColor() {
+    switch ($$props.record.status) {
+      case "completed":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "failed":
+        return "text-red-600 bg-red-50 border-red-200";
+      case "cancelled":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      default:
+        return "text-slate-600 bg-slate-50 border-slate-200";
+    }
+  }
+  function getStatusIcon() {
+    switch ($$props.record.status) {
+      case "completed":
+        return "✓";
+      case "failed":
+        return "✕";
+      case "cancelled":
+        return "⏸";
+      default:
+        return "•";
+    }
+  }
+  next();
+  var fragment = root13();
+  var button = sibling(first_child(fragment));
+  button.__click = function(...$$args) {
+    $$props.onclick?.apply(this, $$args);
+  };
+  var div = sibling(child(button));
+  var node = sibling(child(div));
+  var div_1 = sibling(node, 2);
+  var span = sibling(child(div_1));
+  var text2 = child(span, true);
+  reset(span);
+  next();
+  reset(div_1);
+  var node_1 = sibling(div_1, 2);
+  var div_2 = sibling(node_1, 2);
+  var div_3 = sibling(child(div_2));
+  var h3 = sibling(child(div_3));
+  var text_1 = child(h3, true);
+  reset(h3);
+  var span_1 = sibling(h3, 2);
+  var text_2 = child(span_1);
+  reset(span_1);
+  next();
+  reset(div_3);
+  var p = sibling(div_3, 2);
+  var text_3 = child(p);
+  reset(p);
+  next();
+  reset(div_2);
+  var node_2 = sibling(div_2, 2);
+  var div_4 = sibling(node_2, 2);
+  var div_5 = sibling(child(div_4));
+  var div_6 = sibling(child(div_5));
+  var text_4 = child(div_6, true);
+  reset(div_6);
+  next(3);
+  reset(div_5);
+  var div_7 = sibling(div_5, 2);
+  var div_8 = sibling(child(div_7));
+  var text_5 = child(div_8, true);
+  reset(div_8);
+  next(3);
+  reset(div_7);
+  var div_9 = sibling(div_7, 2);
+  var div_10 = sibling(child(div_9));
+  var text_6 = child(div_10);
+  reset(div_10);
+  next(3);
+  reset(div_9);
+  var div_11 = sibling(div_9, 2);
+  var div_12 = sibling(child(div_11));
+  var text_7 = child(div_12, true);
+  reset(div_12);
+  next();
+  reset(div_11);
+  next();
+  reset(div_4);
+  var node_3 = sibling(div_4, 2);
+  next(3);
+  reset(div);
+  var node_4 = sibling(div, 2);
+  {
+    var consequent = ($$anchor2) => {
+      var fragment_1 = root_117();
+      var div_13 = sibling(first_child(fragment_1));
+      var text_8 = child(div_13);
+      reset(div_13);
+      next();
+      template_effect(() => set_text(text_8, `
+      Error: ${$$props.record.error ?? ""}
+    `));
+      append($$anchor2, fragment_1);
+    };
+    if_block(node_4, ($$render) => {
+      if ($$props.record.error)
+        $$render(consequent);
+    });
+  }
+  next();
+  reset(button);
+  template_effect(($0, $1, $2, $3, $4, $5) => {
+    set_class(div_1, 1, `w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${$0 ?? ""}`);
+    set_text(text2, $1);
+    set_text(text_1, $$props.record.pipelineName);
+    set_class(span_1, 1, `text-xs px-2 py-0.5 rounded-full font-medium ${$2 ?? ""} shrink-0`);
+    set_text(text_2, `
+          ${$$props.record.status ?? ""}
+        `);
+    set_text(text_3, `
+        "${$$props.record.inputPreview ?? ""}"
+      `);
+    set_text(text_4, $3);
+    set_text(text_5, $4);
+    set_text(text_6, `${$$props.record.stagesRun ?? ""}/${$$props.record.totalStages ?? ""}`);
+    set_text(text_7, $5);
+  }, [
+    getStatusColor,
+    getStatusIcon,
+    getStatusColor,
+    () => $$props.formatDuration($$props.record.duration),
+    () => $$props.formatCost($$props.record.totalCost),
+    () => $$props.formatTime($$props.record.startTime)
+  ]);
+  append($$anchor, fragment);
+  pop();
+}
+if (undefined) {}
+var HistoryCard_default = HistoryCard;
+delegate(["click"]);
+
+// web/components/execution/RunningExecutions.svelte
+var root_118 = from_html(`
+    <div class="flex items-center justify-center py-12">
+      <div class="flex items-center gap-3 text-slate-500">
+        <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Loading executions...</span>
+      </div>
+    </div>
+  `, 1);
+var root_39 = from_html(`
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+      <p class="font-medium">Error loading executions</p>
+      <p class="text-sm"> </p>
+    </div>
+  `, 1);
+var root_59 = from_html(`
+          <span class="text-sm text-slate-500"> </span>
+        `, 1);
+var root_68 = from_html(`
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center">
+          <div class="text-3xl mb-3">⚡</div>
+          <h3 class="text-base font-medium text-slate-700 mb-1">No Active Runs</h3>
+          <p class="text-sm text-slate-500">
+            Start a pipeline to see live execution progress here.
+          </p>
+        </div>
+      `, 1);
+var root_86 = from_html(`
+            <!>
+          `, 1);
+var root_76 = from_html(`
+        <div class="space-y-3">
+          <!>
+        </div>
+      `, 1);
+var root_95 = from_html(`
+            <span class="text-sm text-slate-500"> </span>
+          `, 1);
+var root_104 = from_svg(`
+          <svg class="w-4 h-4 animate-spin text-slate-400" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        `, 1);
+var root_115 = from_html(`
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center">
+          <div class="text-3xl mb-3">\uD83D\uDCCB</div>
+          <h3 class="text-base font-medium text-slate-700 mb-1">No Execution History</h3>
+          <p class="text-sm text-slate-500">
+            Completed pipeline runs will appear here.
+          </p>
+        </div>
+      `, 1);
+var root_134 = from_html(`
+            <!>
+          `, 1);
+var root_155 = from_html(`
+                  <button> </button>
+                `, 1);
+var root_144 = from_html(`
+          <div class="flex items-center justify-between mt-6 pt-4 border-t border-slate-200">
+            <div class="text-sm text-slate-500"> </div>
+            <div class="flex items-center gap-2">
+              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                First
+              </button>
+              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                Previous
+              </button>
+              <div class="flex items-center gap-1">
+                <!>
+              </div>
+              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                Next
+              </button>
+              <button class="px-3 py-1.5 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                Last
+              </button>
+            </div>
+          </div>
+        `, 1);
+var root_126 = from_html(`
+        <div class="space-y-2">
+          <!>
+        </div>
+
+        <!-- Pagination Controls -->
+        <!>
+      `, 1);
+var root_46 = from_html(`
+    <!-- Active Runs Section -->
+    <section class="mb-8">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+        <h2 class="text-lg font-semibold text-slate-700">Active Runs</h2>
+        <!>
+      </div>
+
+      <!>
+    </section>
+
+    <!-- Previous Executions Section -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg font-semibold text-slate-700">Previous Executions</h2>
+          <!>
+        </div>
+        <!>
+      </div>
+
+      <!>
+    </section>
+  `, 1);
+var root14 = from_html(`
+
+<div class="max-w-4xl">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Executions</h1>
+      <p class="text-slate-500 mt-1">Monitor active runs and view execution history</p>
+    </div>
+  </div>
+
+  <!>
+</div>`, 1);
+function RunningExecutions($$anchor, $$props) {
+  push($$props, true);
+  let activeExecutions = state(proxy([]));
+  let historyPage = state(null);
+  let currentPage = state(1);
+  let loading = state(true);
+  let historyLoading = state(false);
+  let error = state(null);
+  async function fetchActiveExecutions() {
+    try {
+      const res = await fetch("/api/executions/running");
+      if (!res.ok)
+        throw new Error("Failed to fetch executions");
+      const data = await res.json();
+      set(activeExecutions, data.executions, true);
+      set(error, null);
+    } catch (e) {
+      set(error, e instanceof Error ? e.message : "Unknown error", true);
+    } finally {
+      set(loading, false);
+    }
+  }
+  async function fetchHistory(page = 1) {
+    set(historyLoading, true);
+    try {
+      const res = await fetch(`/api/executions/history?page=${page}&pageSize=20`);
+      if (!res.ok)
+        throw new Error("Failed to fetch history");
+      set(historyPage, await res.json(), true);
+      set(currentPage, page, true);
+    } catch (e) {
+      console.error("Failed to fetch history:", e);
+    } finally {
+      set(historyLoading, false);
+    }
+  }
+  user_effect(() => {
+    fetchActiveExecutions();
+    fetchHistory(1);
+    const interval = setInterval(fetchActiveExecutions, 2000);
+    return () => clearInterval(interval);
+  });
+  function handleExecutionClick(execution) {
+    $$props.navigate(`/executions/${execution.id}`);
+  }
+  function handleHistoryClick(record) {
+    $$props.navigate(`/executions/${record.id}`);
+  }
+  function goToPage(page) {
+    if (page >= 1 && get(historyPage) && page <= get(historyPage).totalPages) {
+      fetchHistory(page);
+    }
+  }
+  function formatDuration(ms) {
+    if (ms < 1000)
+      return `${ms}ms`;
+    if (ms < 60000)
+      return `${(ms / 1000).toFixed(1)}s`;
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor(ms % 60000 / 1000);
+    return `${minutes}m ${seconds}s`;
+  }
+  function formatCost(cost) {
+    return `$${cost.toFixed(4)}`;
+  }
+  function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    const now2 = new Date;
+    const diffMs = now2.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1)
+      return "Just now";
+    if (diffMins < 60)
+      return `${diffMins}m ago`;
+    if (diffHours < 24)
+      return `${diffHours}h ago`;
+    if (diffDays < 7)
+      return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  }
+  next();
+  var fragment = root14();
+  var div = sibling(first_child(fragment));
+  var node = sibling(child(div), 3);
+  {
+    var consequent = ($$anchor2) => {
+      var fragment_1 = root_118();
+      next(2);
+      append($$anchor2, fragment_1);
+    };
+    var alternate_3 = ($$anchor2) => {
+      var fragment_2 = comment();
+      var node_1 = first_child(fragment_2);
+      {
+        var consequent_1 = ($$anchor3) => {
+          var fragment_3 = root_39();
+          var div_1 = sibling(first_child(fragment_3));
+          var p_1 = sibling(child(div_1), 3);
+          var text2 = child(p_1, true);
+          reset(p_1);
+          next();
+          reset(div_1);
+          next();
+          template_effect(() => set_text(text2, get(error)));
+          append($$anchor3, fragment_3);
+        };
+        var alternate_2 = ($$anchor3) => {
+          var fragment_4 = root_46();
+          var node_2 = sibling(first_child(fragment_4));
+          var section = sibling(node_2, 2);
+          var div_2 = sibling(child(section));
+          var node_3 = sibling(child(div_2), 5);
+          {
+            var consequent_2 = ($$anchor4) => {
+              var fragment_5 = root_59();
+              var span = sibling(first_child(fragment_5));
+              var text_1 = child(span);
+              reset(span);
+              next();
+              template_effect(() => set_text(text_1, `(${get(activeExecutions).length ?? ""})`));
+              append($$anchor4, fragment_5);
+            };
+            if_block(node_3, ($$render) => {
+              if (get(activeExecutions).length > 0)
+                $$render(consequent_2);
+            });
+          }
+          next();
+          reset(div_2);
+          var node_4 = sibling(div_2, 2);
+          {
+            var consequent_3 = ($$anchor4) => {
+              var fragment_6 = root_68();
+              next(2);
+              append($$anchor4, fragment_6);
+            };
+            var alternate = ($$anchor4) => {
+              var fragment_7 = root_76();
+              var div_3 = sibling(first_child(fragment_7));
+              var node_5 = sibling(child(div_3));
+              each(node_5, 17, () => get(activeExecutions), (execution) => execution.id, ($$anchor5, execution) => {
+                next();
+                var fragment_8 = root_86();
+                var node_6 = sibling(first_child(fragment_8));
+                ExecutionCard_default(node_6, {
+                  get execution() {
+                    return get(execution);
+                  },
+                  onselect: () => handleExecutionClick(get(execution))
+                });
+                next();
+                append($$anchor5, fragment_8);
+              });
+              next();
+              reset(div_3);
+              next();
+              append($$anchor4, fragment_7);
+            };
+            if_block(node_4, ($$render) => {
+              if (get(activeExecutions).length === 0)
+                $$render(consequent_3);
+              else
+                $$render(alternate, false);
+            });
+          }
+          next();
+          reset(section);
+          var node_7 = sibling(section, 2);
+          var section_1 = sibling(node_7, 2);
+          var div_4 = sibling(child(section_1));
+          var div_5 = sibling(child(div_4));
+          var node_8 = sibling(child(div_5), 3);
+          {
+            var consequent_4 = ($$anchor4) => {
+              var fragment_9 = root_95();
+              var span_1 = sibling(first_child(fragment_9));
+              var text_2 = child(span_1);
+              reset(span_1);
+              next();
+              template_effect(() => set_text(text_2, `(${get(historyPage).total ?? ""} total)`));
+              append($$anchor4, fragment_9);
+            };
+            if_block(node_8, ($$render) => {
+              if (get(historyPage))
+                $$render(consequent_4);
+            });
+          }
+          next();
+          reset(div_5);
+          var node_9 = sibling(div_5, 2);
+          {
+            var consequent_5 = ($$anchor4) => {
+              var fragment_10 = root_104();
+              next(2);
+              append($$anchor4, fragment_10);
+            };
+            if_block(node_9, ($$render) => {
+              if (get(historyLoading))
+                $$render(consequent_5);
+            });
+          }
+          next();
+          reset(div_4);
+          var node_10 = sibling(div_4, 2);
+          {
+            var consequent_6 = ($$anchor4) => {
+              var fragment_11 = root_115();
+              next(2);
+              append($$anchor4, fragment_11);
+            };
+            var alternate_1 = ($$anchor4) => {
+              var fragment_12 = root_126();
+              var div_6 = sibling(first_child(fragment_12));
+              var node_11 = sibling(child(div_6));
+              each(node_11, 17, () => get(historyPage).executions, (record) => record.id, ($$anchor5, record) => {
+                next();
+                var fragment_13 = root_134();
+                var node_12 = sibling(first_child(fragment_13));
+                HistoryCard_default(node_12, {
+                  get record() {
+                    return get(record);
+                  },
+                  formatDuration,
+                  formatCost,
+                  formatTime,
+                  onclick: () => handleHistoryClick(get(record))
+                });
+                next();
+                append($$anchor5, fragment_13);
+              });
+              next();
+              reset(div_6);
+              var node_13 = sibling(div_6, 2);
+              var node_14 = sibling(node_13, 2);
+              {
+                var consequent_7 = ($$anchor5) => {
+                  var fragment_14 = root_144();
+                  var div_7 = sibling(first_child(fragment_14));
+                  var div_8 = sibling(child(div_7));
+                  var text_3 = child(div_8);
+                  reset(div_8);
+                  var div_9 = sibling(div_8, 2);
+                  var button = sibling(child(div_9));
+                  button.__click = () => goToPage(1);
+                  var button_1 = sibling(button, 2);
+                  button_1.__click = () => goToPage(get(currentPage) - 1);
+                  var div_10 = sibling(button_1, 2);
+                  var node_15 = sibling(child(div_10));
+                  each(node_15, 17, () => Array.from({ length: Math.min(5, get(historyPage).totalPages) }, (_, i) => {
+                    const start = Math.max(1, Math.min(get(currentPage) - 2, get(historyPage).totalPages - 4));
+                    return start + i;
+                  }).filter((p) => p <= get(historyPage).totalPages), index, ($$anchor6, pageNum) => {
+                    next();
+                    var fragment_15 = root_155();
+                    var button_2 = sibling(first_child(fragment_15));
+                    button_2.__click = () => goToPage(get(pageNum));
+                    var text_4 = child(button_2);
+                    reset(button_2);
+                    next();
+                    template_effect(() => {
+                      set_class(button_2, 1, `w-8 h-8 text-sm rounded-lg transition-colors ${get(pageNum) === get(currentPage) ? "bg-blue-500 text-white" : "border border-slate-200 hover:bg-slate-50"}`);
+                      set_text(text_4, `
+                    ${get(pageNum) ?? ""}
+                  `);
+                    });
+                    append($$anchor6, fragment_15);
+                  });
+                  next();
+                  reset(div_10);
+                  var button_3 = sibling(div_10, 2);
+                  button_3.__click = () => goToPage(get(currentPage) + 1);
+                  var button_4 = sibling(button_3, 2);
+                  button_4.__click = () => goToPage(get(historyPage).totalPages);
+                  next();
+                  reset(div_9);
+                  next();
+                  reset(div_7);
+                  next();
+                  template_effect(() => {
+                    set_text(text_3, `
+              Page ${get(historyPage).page ?? ""} of ${get(historyPage).totalPages ?? ""}
+            `);
+                    button.disabled = get(currentPage) === 1;
+                    button_1.disabled = get(currentPage) === 1;
+                    button_3.disabled = get(currentPage) === get(historyPage).totalPages;
+                    button_4.disabled = get(currentPage) === get(historyPage).totalPages;
+                  });
+                  append($$anchor5, fragment_14);
+                };
+                if_block(node_14, ($$render) => {
+                  if (get(historyPage).totalPages > 1)
+                    $$render(consequent_7);
+                });
+              }
+              next();
+              append($$anchor4, fragment_12);
+            };
+            if_block(node_10, ($$render) => {
+              if (!get(historyPage) || get(historyPage).executions.length === 0)
+                $$render(consequent_6);
+              else
+                $$render(alternate_1, false);
+            });
+          }
+          next();
+          reset(section_1);
+          next();
+          append($$anchor3, fragment_4);
+        };
+        if_block(node_1, ($$render) => {
+          if (get(error))
+            $$render(consequent_1);
+          else
+            $$render(alternate_2, false);
+        }, true);
+      }
+      append($$anchor2, fragment_2);
+    };
+    if_block(node, ($$render) => {
+      if (get(loading))
+        $$render(consequent);
+      else
+        $$render(alternate_3, false);
+    });
+  }
+  next();
+  reset(div);
+  append($$anchor, fragment);
+  pop();
+}
+if (undefined) {}
+var RunningExecutions_default = RunningExecutions;
+delegate(["click"]);
+
+// web/components/execution/ExecutionDetail.svelte
+var root_119 = from_html(`
+      <span> </span>
+    `, 1);
+var root_28 = from_html(`
+    <div class="flex items-center justify-center py-12">
+      <div class="flex items-center gap-3 text-slate-500">
+        <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Loading execution...</span>
+      </div>
+    </div>
+  `, 1);
+var root_47 = from_html(`
+    <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+      <div class="text-4xl mb-4">\uD83D\uDE15</div>
+      <p class="font-medium text-red-700 mb-2">Execution Not Found</p>
+      <p class="text-red-600 text-sm mb-4"> </p>
+      <button class="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+        <span>Back to Running Executions</span>
+      </button>
+    </div>
+  `, 1);
+var root_77 = from_html(`
+            <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+            <span class="text-blue-600 font-medium">Live</span>
+          `, 1);
+var root_96 = from_html(`
+            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span class="text-green-600 font-medium">Complete</span>
+          `, 1);
+var root_1110 = from_html(`
+            <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+            <span class="text-red-600 font-medium">Failed</span>
+          `, 1);
+var root_127 = from_html(`
+            <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+            <span class="text-yellow-600 font-medium">Cancelled</span>
+          `, 1);
+var root_145 = from_html(`
+          <span class="text-xs text-blue-600 flex items-center gap-1">
+            <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+            Connecting...
+          </span>
+        `, 1);
+var root_163 = from_html(`
+          <span class="text-xs text-green-600 flex items-center gap-1">
+            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+            Live Updates
+          </span>
+        `, 1);
+var root_175 = from_html(`
+          <span class="text-xs text-slate-400 flex items-center gap-1">
+            <span class="w-2 h-2 bg-slate-300 rounded-full"></span>
+            Disconnected
+          </span>
+        `, 1);
+var root_135 = from_html(`
+      <div class="flex items-center justify-end gap-2 mb-2">
+        <!>
+      </div>
+    `, 1);
+var root_184 = from_html(`
+          <span class="text-xs text-slate-400">Click a stage to view output</span>
+        `, 1);
+var root_195 = from_html(`
+        <div class="bg-slate-50 rounded-lg p-6 text-center">
+          <div class="text-slate-400 text-3xl mb-2">\uD83D\uDCDC</div>
+          <p class="text-sm text-slate-600 mb-1">Historical Record</p>
+          <p class="text-xs text-slate-500">
+            Stage details are not available for historical executions.
+            Only the summary is preserved.
+          </p>
+        </div>
+      `, 1);
+var root_212 = from_html(`
+        <div class="bg-slate-50 rounded-lg p-6 text-center">
+          <div class="text-slate-400">Waiting for stages...</div>
+        </div>
+      `, 1);
+var root_234 = from_html(`
+            <!>
+          `, 1);
+var root_224 = from_html(`
+        <div class="space-y-2">
+          <!>
+        </div>
+      `, 1);
+var root_252 = from_html(`
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="bg-slate-50 rounded-lg p-3">
+              <div class="text-xs text-slate-500">Duration</div>
+              <div class="font-medium"> </div>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-3">
+              <div class="text-xs text-slate-500">Total Cost</div>
+              <div class="font-medium"> </div>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-3">
+              <div class="text-xs text-slate-500">Stages</div>
+              <div class="font-medium"> </div>
+            </div>
+          </div>
+        `, 1);
+var root_262 = from_html(`
+          <div>
+            <div class="text-xs font-medium text-slate-500 mb-2">Final Output</div>
+            <pre class="text-sm text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded-lg p-3 max-h-96 overflow-y-auto font-mono"> </pre>
+          </div>
+        `, 1);
+var root_27 = from_html(`
+          <div class="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
+            <div class="text-xs font-medium text-red-500 mb-1">Error</div>
+            <div class="text-sm text-red-700"> </div>
+          </div>
+        `, 1);
+var root_244 = from_html(`
+      <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+        <h3 class="text-sm font-medium text-slate-700 mb-3">Result</h3>
+
+        <!>
+
+        <!>
+
+        <!>
+      </div>
+    `, 1);
+var root_282 = from_html(`
+        <button class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+          Cancel Execution
+        </button>
+      `, 1);
+var root_69 = from_html(`
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 mb-1">Elapsed Time</div>
+        <div class="text-lg font-semibold text-slate-800"> </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 mb-1">Progress</div>
+        <div class="text-lg font-semibold text-slate-800"> </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 mb-1">Total Cost</div>
+        <div class="text-lg font-semibold text-slate-800"> </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 mb-1">Status</div>
+        <div class="flex items-center gap-2">
+          <!>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Section -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+      <h3 class="text-sm font-medium text-slate-700 mb-2">Input</h3>
+      <pre class="text-sm text-slate-600 whitespace-pre-wrap break-words bg-slate-50 rounded-lg p-3 max-h-32 overflow-y-auto"> </pre>
+    </div>
+
+    <!-- WebSocket Status -->
+    <!>
+
+    <!-- Stages -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-medium text-slate-700">Stages</h3>
+        <!>
+      </div>
+      <!>
+    </div>
+
+    <!-- Final Result -->
+    <!>
+
+    <!-- Actions -->
+    <div class="flex gap-3">
+      <button class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
+        View Pipeline
+      </button>
+      <!>
+    </div>
+  `, 1);
+var root15 = from_html(`
+
+<div class="max-w-4xl">
+  <!-- Header -->
+  <div class="flex items-center gap-4 mb-6">
+    <button class="p-2 rounded-lg hover:bg-slate-100 transition-colors" title="Back to Running Executions">
+      <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </button>
+    <div class="flex-1">
+      <h1 class="text-2xl font-bold text-slate-800"> </h1>
+      <p class="text-slate-500 text-sm mt-1"> </p>
+    </div>
+    <!>
+  </div>
+
+  <!>
+</div>`, 1);
+function ExecutionDetail($$anchor, $$props) {
+  push($$props, true);
+  let execution = state(null);
+  let loading = state(true);
+  let error = state(null);
+  let wsStatus = state("disconnected");
+  let expandedStages = state(proxy(new Set));
+  function toggleStage(stageId) {
+    const newSet = new Set(get(expandedStages));
+    if (newSet.has(stageId)) {
+      newSet.delete(stageId);
+    } else {
+      newSet.add(stageId);
+    }
+    set(expandedStages, newSet, true);
+  }
+  function autoExpandStage(stageId) {
+    if (!get(expandedStages).has(stageId)) {
+      const newSet = new Set(get(expandedStages));
+      newSet.add(stageId);
+      set(expandedStages, newSet, true);
+    }
+  }
+  async function fetchExecution() {
+    try {
+      const res = await fetch(`/api/executions/${$$props.executionId}`);
+      if (!res.ok) {
+        if (res.status === 404) {
+          set(error, "Execution not found. It may have expired or been cleaned up.");
+        } else {
+          throw new Error("Failed to fetch execution");
+        }
+        return;
+      }
+      const data = await res.json();
+      set(execution, data, true);
+      set(error, null);
+      if (data.stages) {
+        const toExpand = new Set;
+        for (const stage of data.stages) {
+          if (stage.status === "running" || stage.output) {
+            toExpand.add(stage.id);
+          }
+        }
+        if (toExpand.size > 0) {
+          set(expandedStages, toExpand, true);
+        }
+      }
+    } catch (e) {
+      set(error, e instanceof Error ? e.message : "Unknown error", true);
+    } finally {
+      set(loading, false);
+    }
+  }
+  user_effect(() => {
+    fetchExecution();
+  });
+  user_effect(() => {
+    if (!get(execution) || get(execution).status !== "running" || get(execution).isHistorical)
+      return;
+    set(wsStatus, "connecting");
+    const ws = new WebSocket(`ws://${location.host}/ws`);
+    ws.onopen = () => {
+      set(wsStatus, "connected");
+      ws.send(JSON.stringify({ type: "subscribe", executionId: $$props.executionId }));
+    };
+    ws.onmessage = (event2) => {
+      const data = JSON.parse(event2.data);
+      if (data.type === "stage:started" && get(execution)) {
+        const stageIndex = get(execution).stages.findIndex((s) => s.id === data.stage.id);
+        if (stageIndex >= 0) {
+          get(execution).stages[stageIndex] = { ...get(execution).stages[stageIndex], status: "running" };
+          get(execution).currentStage = data.index + 1;
+          autoExpandStage(data.stage.id);
+        }
+      }
+      if (data.type === "stage:completed" && get(execution)) {
+        const stageIndex = get(execution).stages.findIndex((s) => s.id === data.stage.id);
+        if (stageIndex >= 0) {
+          get(execution).stages[stageIndex] = {
+            ...get(execution).stages[stageIndex],
+            status: "completed",
+            duration: data.result?.duration,
+            cost: data.result?.cost
+          };
+        }
+      }
+      if (data.type === "stage:skipped" && get(execution)) {
+        const stageIndex = get(execution).stages.findIndex((s) => s.id === data.stage.id);
+        if (stageIndex >= 0) {
+          get(execution).stages[stageIndex] = { ...get(execution).stages[stageIndex], status: "skipped" };
+        }
+      }
+      if (data.type === "stage:failed" && get(execution)) {
+        const stageIndex = get(execution).stages.findIndex((s) => s.id === data.stage.id);
+        if (stageIndex >= 0) {
+          get(execution).stages[stageIndex] = {
+            ...get(execution).stages[stageIndex],
+            status: "failed",
+            error: data.error
+          };
+        }
+      }
+      if (data.type === "stage:output" && get(execution)) {
+        const stageIndex = get(execution).stages.findIndex((s) => s.id === data.stageId);
+        if (stageIndex >= 0) {
+          get(execution).stages[stageIndex] = { ...get(execution).stages[stageIndex], output: data.output };
+          autoExpandStage(data.stageId);
+        }
+      }
+      if ((data.type === "execution:completed" || data.type === "execution:failed") && get(execution)) {
+        get(execution).status = data.result?.status === "success" ? "completed" : data.result?.status === "cancelled" ? "cancelled" : data.result?.status === "failed" ? "failed" : "completed";
+        get(execution).result = data.result;
+        ws.close();
+        set(wsStatus, "disconnected");
+      }
+      if (data.type === "execution:cancelled" && get(execution)) {
+        get(execution).status = "cancelled";
+        ws.close();
+        set(wsStatus, "disconnected");
+      }
+    };
+    ws.onerror = () => {
+      set(wsStatus, "disconnected");
+    };
+    ws.onclose = () => {
+      set(wsStatus, "disconnected");
+    };
+    return () => {
+      ws.close();
+    };
+  });
+  function formatDuration(ms) {
+    if (ms < 1000)
+      return `${ms}ms`;
+    if (ms < 60000)
+      return `${(ms / 1000).toFixed(1)}s`;
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor(ms % 60000 / 1000);
+    return `${minutes}m ${seconds}s`;
+  }
+  function formatCost(cost) {
+    return `$${cost.toFixed(4)}`;
+  }
+  function formatOutput(output) {
+    if (!output)
+      return "";
+    if (typeof output === "object") {
+      return JSON.stringify(output, null, 2);
+    }
+    if (typeof output === "string") {
+      try {
+        const parsed = JSON.parse(output);
+        return JSON.stringify(parsed, null, 2);
+      } catch {
+        return output;
+      }
+    }
+    return String(output);
+  }
+  function formatElapsed(startTime) {
+    const elapsed2 = Date.now() - startTime;
+    return formatDuration(elapsed2);
+  }
+  function getStatusColor() {
+    if (!get(execution))
+      return "";
+    switch (get(execution).status) {
+      case "running":
+        return "text-blue-600 bg-blue-50 border-blue-200";
+      case "completed":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "failed":
+        return "text-red-600 bg-red-50 border-red-200";
+      case "cancelled":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      default:
+        return "text-slate-600 bg-slate-50 border-slate-200";
+    }
+  }
+  let totalCost = user_derived(() => get(execution)?.result?.summary?.totalCost || get(execution)?.stages.reduce((sum, s) => sum + (s.cost || 0), 0) || 0);
+  let elapsed = state("");
+  user_effect(() => {
+    if (!get(execution))
+      return;
+    if (get(execution).isHistorical && get(execution).result?.summary?.totalDuration) {
+      set(elapsed, formatDuration(get(execution).result.summary.totalDuration), true);
+      return;
+    }
+    set(elapsed, formatElapsed(get(execution).startTime), true);
+    if (get(execution).status !== "running")
+      return;
+    const interval = setInterval(() => {
+      set(elapsed, formatElapsed(get(execution).startTime), true);
+    }, 1000);
+    return () => clearInterval(interval);
+  });
+  next();
+  var fragment = root15();
+  var div = sibling(first_child(fragment));
+  var node = sibling(child(div));
+  var div_1 = sibling(node, 2);
+  var button = sibling(child(div_1));
+  button.__click = () => $$props.navigate("/running");
+  var div_2 = sibling(button, 2);
+  var h1 = sibling(child(div_2));
+  var text2 = child(h1);
+  reset(h1);
+  var p = sibling(h1, 2);
+  var text_1 = child(p);
+  reset(p);
+  next();
+  reset(div_2);
+  var node_1 = sibling(div_2, 2);
+  {
+    var consequent = ($$anchor2) => {
+      var fragment_1 = root_119();
+      var span = sibling(first_child(fragment_1));
+      var text_2 = child(span);
+      reset(span);
+      next();
+      template_effect(($0) => {
+        set_class(span, 1, `px-3 py-1 rounded-full text-sm font-medium border ${$0 ?? ""}`);
+        set_text(text_2, `
+        ${get(execution).status ?? ""}
+      `);
+      }, [getStatusColor]);
+      append($$anchor2, fragment_1);
+    };
+    if_block(node_1, ($$render) => {
+      if (get(execution))
+        $$render(consequent);
+    });
+  }
+  next();
+  reset(div_1);
+  var node_2 = sibling(div_1, 2);
+  {
+    var consequent_1 = ($$anchor2) => {
+      var fragment_2 = root_28();
+      next(2);
+      append($$anchor2, fragment_2);
+    };
+    var alternate_8 = ($$anchor2) => {
+      var fragment_3 = comment();
+      var node_3 = first_child(fragment_3);
+      {
+        var consequent_2 = ($$anchor3) => {
+          var fragment_4 = root_47();
+          var div_3 = sibling(first_child(fragment_4));
+          var p_1 = sibling(child(div_3), 5);
+          var text_3 = child(p_1, true);
+          reset(p_1);
+          var button_1 = sibling(p_1, 2);
+          button_1.__click = () => $$props.navigate("/running");
+          next();
+          reset(div_3);
+          next();
+          template_effect(() => set_text(text_3, get(error)));
+          append($$anchor3, fragment_4);
+        };
+        var alternate_7 = ($$anchor3) => {
+          var fragment_5 = comment();
+          var node_4 = first_child(fragment_5);
+          {
+            var consequent_17 = ($$anchor4) => {
+              var fragment_6 = root_69();
+              var node_5 = sibling(first_child(fragment_6));
+              var div_4 = sibling(node_5, 2);
+              var div_5 = sibling(child(div_4));
+              var div_6 = sibling(child(div_5), 3);
+              var text_4 = child(div_6, true);
+              reset(div_6);
+              next();
+              reset(div_5);
+              var div_7 = sibling(div_5, 2);
+              var div_8 = sibling(child(div_7), 3);
+              var text_5 = child(div_8);
+              reset(div_8);
+              next();
+              reset(div_7);
+              var div_9 = sibling(div_7, 2);
+              var div_10 = sibling(child(div_9), 3);
+              var text_6 = child(div_10, true);
+              reset(div_10);
+              next();
+              reset(div_9);
+              var div_11 = sibling(div_9, 2);
+              var div_12 = sibling(child(div_11), 3);
+              var node_6 = sibling(child(div_12));
+              {
+                var consequent_3 = ($$anchor5) => {
+                  var fragment_7 = root_77();
+                  next(4);
+                  append($$anchor5, fragment_7);
+                };
+                var alternate_2 = ($$anchor5) => {
+                  var fragment_8 = comment();
+                  var node_7 = first_child(fragment_8);
+                  {
+                    var consequent_4 = ($$anchor6) => {
+                      var fragment_9 = root_96();
+                      next(4);
+                      append($$anchor6, fragment_9);
+                    };
+                    var alternate_1 = ($$anchor6) => {
+                      var fragment_10 = comment();
+                      var node_8 = first_child(fragment_10);
+                      {
+                        var consequent_5 = ($$anchor7) => {
+                          var fragment_11 = root_1110();
+                          next(4);
+                          append($$anchor7, fragment_11);
+                        };
+                        var alternate = ($$anchor7) => {
+                          var fragment_12 = root_127();
+                          next(4);
+                          append($$anchor7, fragment_12);
+                        };
+                        if_block(node_8, ($$render) => {
+                          if (get(execution).status === "failed")
+                            $$render(consequent_5);
+                          else
+                            $$render(alternate, false);
+                        }, true);
+                      }
+                      append($$anchor6, fragment_10);
+                    };
+                    if_block(node_7, ($$render) => {
+                      if (get(execution).status === "completed")
+                        $$render(consequent_4);
+                      else
+                        $$render(alternate_1, false);
+                    }, true);
+                  }
+                  append($$anchor5, fragment_8);
+                };
+                if_block(node_6, ($$render) => {
+                  if (get(execution).status === "running")
+                    $$render(consequent_3);
+                  else
+                    $$render(alternate_2, false);
+                });
+              }
+              next();
+              reset(div_12);
+              next();
+              reset(div_11);
+              next();
+              reset(div_4);
+              var node_9 = sibling(div_4, 2);
+              var div_13 = sibling(node_9, 2);
+              var pre = sibling(child(div_13), 3);
+              var text_7 = child(pre, true);
+              reset(pre);
+              next();
+              reset(div_13);
+              var node_10 = sibling(div_13, 2);
+              var node_11 = sibling(node_10, 2);
+              {
+                var consequent_8 = ($$anchor5) => {
+                  var fragment_13 = root_135();
+                  var div_14 = sibling(first_child(fragment_13));
+                  var node_12 = sibling(child(div_14));
+                  {
+                    var consequent_6 = ($$anchor6) => {
+                      var fragment_14 = root_145();
+                      next(2);
+                      append($$anchor6, fragment_14);
+                    };
+                    var alternate_4 = ($$anchor6) => {
+                      var fragment_15 = comment();
+                      var node_13 = first_child(fragment_15);
+                      {
+                        var consequent_7 = ($$anchor7) => {
+                          var fragment_16 = root_163();
+                          next(2);
+                          append($$anchor7, fragment_16);
+                        };
+                        var alternate_3 = ($$anchor7) => {
+                          var fragment_17 = root_175();
+                          next(2);
+                          append($$anchor7, fragment_17);
+                        };
+                        if_block(node_13, ($$render) => {
+                          if (get(wsStatus) === "connected")
+                            $$render(consequent_7);
+                          else
+                            $$render(alternate_3, false);
+                        }, true);
+                      }
+                      append($$anchor6, fragment_15);
+                    };
+                    if_block(node_12, ($$render) => {
+                      if (get(wsStatus) === "connecting")
+                        $$render(consequent_6);
+                      else
+                        $$render(alternate_4, false);
+                    });
+                  }
+                  next();
+                  reset(div_14);
+                  next();
+                  append($$anchor5, fragment_13);
+                };
+                if_block(node_11, ($$render) => {
+                  if (get(execution).status === "running")
+                    $$render(consequent_8);
+                });
+              }
+              var node_14 = sibling(node_11, 2);
+              var div_15 = sibling(node_14, 2);
+              var div_16 = sibling(child(div_15));
+              var node_15 = sibling(child(div_16), 3);
+              {
+                var consequent_9 = ($$anchor5) => {
+                  var fragment_18 = root_184();
+                  next(2);
+                  append($$anchor5, fragment_18);
+                };
+                if_block(node_15, ($$render) => {
+                  if (!get(execution).isHistorical && get(execution).stages.length > 0)
+                    $$render(consequent_9);
+                });
+              }
+              next();
+              reset(div_16);
+              var node_16 = sibling(div_16, 2);
+              {
+                var consequent_10 = ($$anchor5) => {
+                  var fragment_19 = root_195();
+                  next(2);
+                  append($$anchor5, fragment_19);
+                };
+                var alternate_6 = ($$anchor5) => {
+                  var fragment_20 = comment();
+                  var node_17 = first_child(fragment_20);
+                  {
+                    var consequent_11 = ($$anchor6) => {
+                      var fragment_21 = root_212();
+                      next(2);
+                      append($$anchor6, fragment_21);
+                    };
+                    var alternate_5 = ($$anchor6) => {
+                      var fragment_22 = root_224();
+                      var div_17 = sibling(first_child(fragment_22));
+                      var node_18 = sibling(child(div_17));
+                      each(node_18, 17, () => get(execution).stages, index, ($$anchor7, stage, index2) => {
+                        next();
+                        var fragment_23 = root_234();
+                        var node_19 = sibling(first_child(fragment_23));
+                        {
+                          let $0 = user_derived(() => get(expandedStages).has(get(stage).id));
+                          StageStatus_default(node_19, {
+                            get stage() {
+                              return get(stage);
+                            },
+                            index: index2,
+                            get expanded() {
+                              return get($0);
+                            },
+                            onToggle: () => toggleStage(get(stage).id)
+                          });
+                        }
+                        next();
+                        append($$anchor7, fragment_23);
+                      });
+                      next();
+                      reset(div_17);
+                      next();
+                      append($$anchor6, fragment_22);
+                    };
+                    if_block(node_17, ($$render) => {
+                      if (get(execution).stages.length === 0)
+                        $$render(consequent_11);
+                      else
+                        $$render(alternate_5, false);
+                    }, true);
+                  }
+                  append($$anchor5, fragment_20);
+                };
+                if_block(node_16, ($$render) => {
+                  if (get(execution).isHistorical)
+                    $$render(consequent_10);
+                  else
+                    $$render(alternate_6, false);
+                });
+              }
+              next();
+              reset(div_15);
+              var node_20 = sibling(div_15, 2);
+              var node_21 = sibling(node_20, 2);
+              {
+                var consequent_15 = ($$anchor5) => {
+                  var fragment_24 = root_244();
+                  var div_18 = sibling(first_child(fragment_24));
+                  var node_22 = sibling(child(div_18), 3);
+                  {
+                    var consequent_12 = ($$anchor6) => {
+                      var fragment_25 = root_252();
+                      var div_19 = sibling(first_child(fragment_25));
+                      var div_20 = sibling(child(div_19));
+                      var div_21 = sibling(child(div_20), 3);
+                      var text_8 = child(div_21, true);
+                      reset(div_21);
+                      next();
+                      reset(div_20);
+                      var div_22 = sibling(div_20, 2);
+                      var div_23 = sibling(child(div_22), 3);
+                      var text_9 = child(div_23, true);
+                      reset(div_23);
+                      next();
+                      reset(div_22);
+                      var div_24 = sibling(div_22, 2);
+                      var div_25 = sibling(child(div_24), 3);
+                      var text_10 = child(div_25);
+                      reset(div_25);
+                      next();
+                      reset(div_24);
+                      next();
+                      reset(div_19);
+                      next();
+                      template_effect(($0, $1) => {
+                        set_text(text_8, $0);
+                        set_text(text_9, $1);
+                        set_text(text_10, `
+                ${get(execution).result.summary.stagesRun ?? ""} run,
+                ${get(execution).result.summary.stagesSkipped ?? ""} skipped,
+                ${get(execution).result.summary.stagesFailed ?? ""} failed
+              `);
+                      }, [
+                        () => formatDuration(get(execution).result.summary.totalDuration),
+                        () => formatCost(get(execution).result.summary.totalCost)
+                      ]);
+                      append($$anchor6, fragment_25);
+                    };
+                    if_block(node_22, ($$render) => {
+                      if (get(execution).result.summary)
+                        $$render(consequent_12);
+                    });
+                  }
+                  var node_23 = sibling(node_22, 2);
+                  {
+                    var consequent_13 = ($$anchor6) => {
+                      var fragment_26 = root_262();
+                      var div_26 = sibling(first_child(fragment_26));
+                      var pre_1 = sibling(child(div_26), 3);
+                      var text_11 = child(pre_1, true);
+                      reset(pre_1);
+                      next();
+                      reset(div_26);
+                      next();
+                      template_effect(($0) => set_text(text_11, $0), [() => formatOutput(get(execution).result.output)]);
+                      append($$anchor6, fragment_26);
+                    };
+                    if_block(node_23, ($$render) => {
+                      if (get(execution).result.output)
+                        $$render(consequent_13);
+                    });
+                  }
+                  var node_24 = sibling(node_23, 2);
+                  {
+                    var consequent_14 = ($$anchor6) => {
+                      var fragment_27 = root_27();
+                      var div_27 = sibling(first_child(fragment_27));
+                      var div_28 = sibling(child(div_27), 3);
+                      var text_12 = child(div_28, true);
+                      reset(div_28);
+                      next();
+                      reset(div_27);
+                      next();
+                      template_effect(() => set_text(text_12, get(execution).result.error));
+                      append($$anchor6, fragment_27);
+                    };
+                    if_block(node_24, ($$render) => {
+                      if (get(execution).result.error)
+                        $$render(consequent_14);
+                    });
+                  }
+                  next();
+                  reset(div_18);
+                  next();
+                  append($$anchor5, fragment_24);
+                };
+                if_block(node_21, ($$render) => {
+                  if (get(execution).result)
+                    $$render(consequent_15);
+                });
+              }
+              var node_25 = sibling(node_21, 2);
+              var div_29 = sibling(node_25, 2);
+              var button_2 = sibling(child(div_29));
+              button_2.__click = () => $$props.navigate(`/pipelines/${get(execution).pipelineId}`);
+              var node_26 = sibling(button_2, 2);
+              {
+                var consequent_16 = ($$anchor5) => {
+                  var fragment_28 = root_282();
+                  var button_3 = sibling(first_child(fragment_28));
+                  button_3.__click = async () => {
+                    await fetch(`/api/executions/${$$props.executionId}/cancel`, { method: "POST" });
+                  };
+                  next();
+                  append($$anchor5, fragment_28);
+                };
+                if_block(node_26, ($$render) => {
+                  if (get(execution).status === "running")
+                    $$render(consequent_16);
+                });
+              }
+              next();
+              reset(div_29);
+              next();
+              template_effect(($0) => {
+                set_text(text_4, get(elapsed));
+                set_text(text_5, `
+          ${get(execution).currentStage ?? ""}/${get(execution).totalStages ?? ""} stages
+        `);
+                set_text(text_6, $0);
+                set_text(text_7, get(execution).input);
+              }, [() => formatCost(get(totalCost))]);
+              append($$anchor4, fragment_6);
+            };
+            if_block(node_4, ($$render) => {
+              if (get(execution))
+                $$render(consequent_17);
+            }, true);
+          }
+          append($$anchor3, fragment_5);
+        };
+        if_block(node_3, ($$render) => {
+          if (get(error))
+            $$render(consequent_2);
+          else
+            $$render(alternate_7, false);
+        }, true);
+      }
+      append($$anchor2, fragment_3);
+    };
+    if_block(node_2, ($$render) => {
+      if (get(loading))
+        $$render(consequent_1);
+      else
+        $$render(alternate_8, false);
+    });
+  }
+  next();
+  reset(div);
+  template_effect(() => {
+    set_text(text2, `
+        ${(get(execution)?.pipelineName || "Execution Details") ?? ""}
+      `);
+    set_text(text_1, `
+        ${$$props.executionId ?? ""}
+      `);
+  });
+  append($$anchor, fragment);
+  pop();
+}
+if (undefined) {}
+var ExecutionDetail_default = ExecutionDetail;
+delegate(["click"]);
+
 // web/components/App.svelte
-var root_113 = from_html(`
+var root_120 = from_html(`
       <!>
     `, 1);
-var root_35 = from_html(`
+var root_310 = from_html(`
       <!>
     `, 1);
-var root_55 = from_html(`
+var root_510 = from_html(`
       <!>
     `, 1);
-var root_73 = from_html(`
+var root_78 = from_html(`
       <!>
     `, 1);
-var root_93 = from_html(`
+var root_97 = from_html(`
       <!>
     `, 1);
-var root7 = from_html(`
+var root_1112 = from_html(`
+      <!>
+    `, 1);
+var root_136 = from_html(`
+      <!>
+    `, 1);
+var root16 = from_html(`
 
 <div class="flex min-h-screen">
   <!>
@@ -6866,6 +10881,10 @@ function App($$anchor, $$props) {
       return "pipelines";
     if (get(currentPath).startsWith("/pipelines/"))
       return "pipeline-detail";
+    if (get(currentPath) === "/running")
+      return "running";
+    if (get(currentPath).startsWith("/executions/"))
+      return "execution-detail";
     if (get(currentPath) === "/outputs")
       return "outputs";
     if (get(currentPath).startsWith("/outputs/"))
@@ -6878,11 +10897,15 @@ function App($$anchor, $$props) {
   function getOutputFilename() {
     return get(currentPath).replace("/outputs/", "");
   }
+  function getExecutionId() {
+    return get(currentPath).replace("/executions/", "");
+  }
   let view = user_derived(getView);
   let pipelineId = user_derived(getPipelineId);
   let outputFilename = user_derived(getOutputFilename);
+  let executionId = user_derived(getExecutionId);
   next();
-  var fragment = root7();
+  var fragment = root16();
   var div = sibling(first_child(fragment));
   var node = sibling(child(div));
   Sidebar_default(node, {
@@ -6895,29 +10918,29 @@ function App($$anchor, $$props) {
   var node_1 = sibling(child(main));
   {
     var consequent = ($$anchor2) => {
-      var fragment_1 = root_113();
+      var fragment_1 = root_120();
       var node_2 = sibling(first_child(fragment_1));
       Dashboard_default(node_2, { navigate });
       next();
       append($$anchor2, fragment_1);
     };
-    var alternate_3 = ($$anchor2) => {
+    var alternate_5 = ($$anchor2) => {
       var fragment_2 = comment();
       var node_3 = first_child(fragment_2);
       {
         var consequent_1 = ($$anchor3) => {
-          var fragment_3 = root_35();
+          var fragment_3 = root_310();
           var node_4 = sibling(first_child(fragment_3));
           PipelineList_default(node_4, { navigate });
           next();
           append($$anchor3, fragment_3);
         };
-        var alternate_2 = ($$anchor3) => {
+        var alternate_4 = ($$anchor3) => {
           var fragment_4 = comment();
           var node_5 = first_child(fragment_4);
           {
             var consequent_2 = ($$anchor4) => {
-              var fragment_5 = root_55();
+              var fragment_5 = root_510();
               var node_6 = sibling(first_child(fragment_5));
               PipelineDetail_default(node_6, {
                 get id() {
@@ -6928,45 +10951,90 @@ function App($$anchor, $$props) {
               next();
               append($$anchor4, fragment_5);
             };
-            var alternate_1 = ($$anchor4) => {
+            var alternate_3 = ($$anchor4) => {
               var fragment_6 = comment();
               var node_7 = first_child(fragment_6);
               {
                 var consequent_3 = ($$anchor5) => {
-                  var fragment_7 = root_73();
+                  var fragment_7 = root_78();
                   var node_8 = sibling(first_child(fragment_7));
-                  OutputList_default(node_8, { navigate });
+                  RunningExecutions_default(node_8, { navigate });
                   next();
                   append($$anchor5, fragment_7);
                 };
-                var alternate = ($$anchor5) => {
+                var alternate_2 = ($$anchor5) => {
                   var fragment_8 = comment();
                   var node_9 = first_child(fragment_8);
                   {
                     var consequent_4 = ($$anchor6) => {
-                      var fragment_9 = root_93();
+                      var fragment_9 = root_97();
                       var node_10 = sibling(first_child(fragment_9));
-                      OutputDetail_default(node_10, {
-                        get filename() {
-                          return get(outputFilename);
+                      ExecutionDetail_default(node_10, {
+                        get executionId() {
+                          return get(executionId);
                         },
                         navigate
                       });
                       next();
                       append($$anchor6, fragment_9);
                     };
+                    var alternate_1 = ($$anchor6) => {
+                      var fragment_10 = comment();
+                      var node_11 = first_child(fragment_10);
+                      {
+                        var consequent_5 = ($$anchor7) => {
+                          var fragment_11 = root_1112();
+                          var node_12 = sibling(first_child(fragment_11));
+                          OutputList_default(node_12, { navigate });
+                          next();
+                          append($$anchor7, fragment_11);
+                        };
+                        var alternate = ($$anchor7) => {
+                          var fragment_12 = comment();
+                          var node_13 = first_child(fragment_12);
+                          {
+                            var consequent_6 = ($$anchor8) => {
+                              var fragment_13 = root_136();
+                              var node_14 = sibling(first_child(fragment_13));
+                              OutputDetail_default(node_14, {
+                                get filename() {
+                                  return get(outputFilename);
+                                },
+                                navigate
+                              });
+                              next();
+                              append($$anchor8, fragment_13);
+                            };
+                            if_block(node_13, ($$render) => {
+                              if (get(view) === "output-detail")
+                                $$render(consequent_6);
+                            }, true);
+                          }
+                          append($$anchor7, fragment_12);
+                        };
+                        if_block(node_11, ($$render) => {
+                          if (get(view) === "outputs")
+                            $$render(consequent_5);
+                          else
+                            $$render(alternate, false);
+                        }, true);
+                      }
+                      append($$anchor6, fragment_10);
+                    };
                     if_block(node_9, ($$render) => {
-                      if (get(view) === "output-detail")
+                      if (get(view) === "execution-detail")
                         $$render(consequent_4);
+                      else
+                        $$render(alternate_1, false);
                     }, true);
                   }
                   append($$anchor5, fragment_8);
                 };
                 if_block(node_7, ($$render) => {
-                  if (get(view) === "outputs")
+                  if (get(view) === "running")
                     $$render(consequent_3);
                   else
-                    $$render(alternate, false);
+                    $$render(alternate_2, false);
                 }, true);
               }
               append($$anchor4, fragment_6);
@@ -6975,7 +11043,7 @@ function App($$anchor, $$props) {
               if (get(view) === "pipeline-detail")
                 $$render(consequent_2);
               else
-                $$render(alternate_1, false);
+                $$render(alternate_3, false);
             }, true);
           }
           append($$anchor3, fragment_4);
@@ -6984,7 +11052,7 @@ function App($$anchor, $$props) {
           if (get(view) === "pipelines")
             $$render(consequent_1);
           else
-            $$render(alternate_2, false);
+            $$render(alternate_4, false);
         }, true);
       }
       append($$anchor2, fragment_2);
@@ -6993,7 +11061,7 @@ function App($$anchor, $$props) {
       if (get(view) === "dashboard")
         $$render(consequent);
       else
-        $$render(alternate_3, false);
+        $$render(alternate_5, false);
     });
   }
   next();
@@ -7012,5 +11080,5 @@ if (target) {
   mount(App_default, { target });
 }
 
-//# debugId=9C6BC8AD1BDCC9CB64756E2164756E21
+//# debugId=6C7853AEDA16EE4F64756E2164756E21
 //# sourceMappingURL=app.js.map

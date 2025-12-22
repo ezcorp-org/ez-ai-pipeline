@@ -2,19 +2,25 @@ import type { Stage } from "@typings/stage.ts";
 import type { StageResult } from "@typings/result.ts";
 import type { PipelineContext } from "@core/context.ts";
 import { SessionManager, type PromptResult } from "@core/session.ts";
+import { CLISessionManager, type CLISessionOptions } from "@core/cli-session.ts";
 import { parseOutput } from "@core/output-parser.ts";
 import { evaluateConditions, evaluateEarlyExit, type ConditionResult } from "@core/condition-evaluator.ts";
 import { buildPromptFromConfig } from "@utils/template.ts";
 import { StageExecutionError } from "@utils/errors.ts";
 
+export type ExecutionMode = "api" | "cli";
+
 export interface StageRunnerOptions {
   enableEarlyExit?: boolean;
   maxRetries?: number;
   timeoutMs?: number;
+  executionMode?: ExecutionMode;
+  cliOptions?: CLISessionOptions;
   onStageStart?: (stage: Stage, index: number, total: number) => void;
   onStageComplete?: (stage: Stage, result: StageResult) => void;
   onStageSkipped?: (stage: Stage, reason: string) => void;
   onStageFailed?: (stage: Stage, error: Error) => void;
+  onStageOutput?: (stage: Stage, output: string, isFinal: boolean) => void;
 }
 
 export interface StageRunResult {
@@ -64,6 +70,9 @@ export class StageRunner {
       // Call the model
       const modelResult = await this.callModel(stage, prompt);
 
+      // Emit output event (final output after model completes)
+      this.options.onStageOutput?.(stage, modelResult.text, true);
+
       // Parse the output
       const parsedOutput = parseOutput(modelResult.text, stage.output);
 
@@ -108,8 +117,18 @@ export class StageRunner {
   private async callModel(stage: Stage, prompt: string): Promise<PromptResult> {
     const timeoutMs = stage.timeoutMs || this.options.timeoutMs || 60000;
     const maxRetries = stage.retryCount || this.options.maxRetries || 2;
+    const executionMode = this.options.executionMode ?? "api";
 
-    // Create a new session with stage-specific options
+    if (executionMode === "cli") {
+      // Use CLI-based execution
+      const cliSession = new CLISessionManager({
+        ...this.options.cliOptions,
+        timeoutMs,
+      });
+      return await cliSession.prompt(stage.model, prompt, stage.prompt.systemPrompt);
+    }
+
+    // Use API-based execution (default)
     const stageSession = new SessionManager({
       maxRetries,
       timeoutMs,

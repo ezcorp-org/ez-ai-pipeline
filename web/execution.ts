@@ -2,8 +2,30 @@ import type { PipelineConfig } from "../src/typings/pipeline.ts";
 import type { PipelineResult, StageResult } from "../src/typings/result.ts";
 import type { Stage } from "../src/typings/stage.ts";
 import type { ServerWebSocket } from "bun";
-import { PipelineExecutor } from "../src/core/executor.ts";
+import { PipelineExecutor, type ExecutorOptions } from "../src/core/executor.ts";
+import type { ExecutionMode } from "../src/core/stage-runner.ts";
+import type { CLISessionOptions } from "../src/core/cli-session.ts";
 import { savePipelineResult } from "../src/utils/file.ts";
+import { join } from "path";
+
+const HISTORY_FILE = join(import.meta.dir, "../outputs/execution-history.json");
+
+interface ExecutionHistoryRecord {
+  id: string;
+  pipelineId: string;
+  pipelineName: string;
+  status: "completed" | "failed" | "cancelled";
+  startTime: number;
+  endTime: number;
+  duration: number;
+  totalStages: number;
+  stagesRun: number;
+  stagesSkipped: number;
+  stagesFailed: number;
+  inputPreview: string;
+  totalCost: number;
+  error?: string;
+}
 
 export interface ExecutionEvent {
   type: string;
@@ -11,18 +33,78 @@ export interface ExecutionEvent {
   [key: string]: unknown;
 }
 
+interface StageProgress {
+  id: string;
+  name: string;
+  type: string;
+  status: "pending" | "running" | "completed" | "skipped" | "failed";
+  duration?: number;
+  cost?: number;
+  error?: string;
+  output?: string;
+}
+
 interface ActiveExecution {
   id: string;
   pipelineId: string;
+  pipelineName: string;
+  inputPreview: string;
+  input: string;
   executor: PipelineExecutor;
   subscribers: Set<ServerWebSocket<WebSocketData>>;
   status: "running" | "completed" | "failed" | "cancelled";
   startTime: number;
+  currentStage: number;
+  totalStages: number;
+  stages: StageProgress[];
   result?: PipelineResult;
+}
+
+export interface ExecutionListItem {
+  id: string;
+  pipelineId: string;
+  pipelineName: string;
+  status: "running" | "completed" | "failed" | "cancelled";
+  startTime: number;
+  currentStage: number;
+  totalStages: number;
+  inputPreview: string;
+}
+
+export interface ExecutionDetail {
+  id: string;
+  pipelineId: string;
+  pipelineName: string;
+  status: "running" | "completed" | "failed" | "cancelled";
+  startTime: number;
+  currentStage: number;
+  totalStages: number;
+  input: string;
+  stages: StageProgress[];
+  result?: {
+    status: string;
+    output?: string;
+    error?: string;
+    summary?: {
+      totalDuration: number;
+      totalCost: number;
+      stagesRun: number;
+      stagesSkipped: number;
+      stagesFailed: number;
+    };
+  };
 }
 
 export interface WebSocketData {
   subscribedExecutions: Set<string>;
+}
+
+export interface ExecutionHistoryPage {
+  executions: ExecutionHistoryRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 class ExecutionManager {
@@ -36,13 +118,39 @@ class ExecutionManager {
   async start(
     executionId: string,
     config: PipelineConfig,
-    input: string
+    input: string,
+    options: { executionMode?: ExecutionMode; cliOptions?: CLISessionOptions } = {}
   ): Promise<void> {
+    const executorOptions: ExecutorOptions = {
+      executionMode: options.executionMode,
+      cliOptions: options.cliOptions,
+    };
+
+    // Initialize stages array from config
+    const initialStages: StageProgress[] = config.stages.map((s) => ({
+      id: s.id,
+      name: s.name,
+      type: s.type,
+      status: "pending" as const,
+    }));
+
     const execution: ActiveExecution = {
       id: executionId,
       pipelineId: config.pipeline.id,
+      pipelineName: config.pipeline.name,
+      inputPreview: input.slice(0, 100) + (input.length > 100 ? "..." : ""),
+      input: input,
       executor: new PipelineExecutor({
         onStageStart: (stage, index, total) => {
+          // Update current stage tracking and stage status
+          const exec = this.executions.get(executionId);
+          if (exec) {
+            exec.currentStage = index + 1;
+            const stageProgress = exec.stages.find(s => s.id === stage.id);
+            if (stageProgress) {
+              stageProgress.status = "running";
+            }
+          }
           this.broadcast(executionId, {
             type: "stage:started",
             executionId,
@@ -52,6 +160,16 @@ class ExecutionManager {
           });
         },
         onStageComplete: (stage, result) => {
+          // Update stage result
+          const exec = this.executions.get(executionId);
+          if (exec) {
+            const stageProgress = exec.stages.find(s => s.id === stage.id);
+            if (stageProgress) {
+              stageProgress.status = "completed";
+              stageProgress.duration = result.duration;
+              stageProgress.cost = result.cost;
+            }
+          }
           this.broadcast(executionId, {
             type: "stage:completed",
             executionId,
@@ -64,6 +182,14 @@ class ExecutionManager {
           });
         },
         onStageSkipped: (stage, reason) => {
+          // Update stage as skipped
+          const exec = this.executions.get(executionId);
+          if (exec) {
+            const stageProgress = exec.stages.find(s => s.id === stage.id);
+            if (stageProgress) {
+              stageProgress.status = "skipped";
+            }
+          }
           this.broadcast(executionId, {
             type: "stage:skipped",
             executionId,
@@ -72,6 +198,15 @@ class ExecutionManager {
           });
         },
         onStageFailed: (stage, error) => {
+          // Update stage as failed
+          const exec = this.executions.get(executionId);
+          if (exec) {
+            const stageProgress = exec.stages.find(s => s.id === stage.id);
+            if (stageProgress) {
+              stageProgress.status = "failed";
+              stageProgress.error = error.message;
+            }
+          }
           this.broadcast(executionId, {
             type: "stage:failed",
             executionId,
@@ -79,10 +214,37 @@ class ExecutionManager {
             error: error.message,
           });
         },
-      }),
+        onStageOutput: (stage, output, isFinal) => {
+          // Truncate output if too large (max 50KB per stage)
+          const maxOutputSize = 50 * 1024;
+          const truncatedOutput = output.length > maxOutputSize
+            ? output.slice(0, maxOutputSize) + "\n...[output truncated]..."
+            : output;
+
+          // Store output in stage progress
+          const exec = this.executions.get(executionId);
+          if (exec) {
+            const stageProgress = exec.stages.find(s => s.id === stage.id);
+            if (stageProgress) {
+              stageProgress.output = truncatedOutput;
+            }
+          }
+
+          this.broadcast(executionId, {
+            type: "stage:output",
+            executionId,
+            stageId: stage.id,
+            output: truncatedOutput,
+            isFinal,
+          });
+        },
+      }, executorOptions),
       subscribers: new Set(),
       status: "running",
       startTime: Date.now(),
+      currentStage: 0,
+      totalStages: config.stages.length,
+      stages: initialStages,
     };
 
     this.executions.set(executionId, execution);
@@ -106,6 +268,9 @@ class ExecutionManager {
       // Save result to outputs
       await savePipelineResult(result);
 
+      // Save to history
+      await this.saveToHistory(execution);
+
       // Broadcast completion
       this.broadcast(executionId, {
         type: "execution:completed",
@@ -120,6 +285,10 @@ class ExecutionManager {
       });
     } catch (error) {
       execution.status = "failed";
+
+      // Save failed execution to history
+      await this.saveToHistory(execution);
+
       this.broadcast(executionId, {
         type: "execution:failed",
         executionId,
@@ -193,6 +362,63 @@ class ExecutionManager {
     return this.executions.get(executionId);
   }
 
+  getExecutionDetail(executionId: string): ExecutionDetail | undefined {
+    const exec = this.executions.get(executionId);
+    if (!exec) return undefined;
+
+    return {
+      id: exec.id,
+      pipelineId: exec.pipelineId,
+      pipelineName: exec.pipelineName,
+      status: exec.status,
+      startTime: exec.startTime,
+      currentStage: exec.currentStage,
+      totalStages: exec.totalStages,
+      input: exec.input,
+      stages: exec.stages,
+      result: exec.result ? {
+        status: exec.result.status,
+        output: exec.result.output,
+        error: exec.result.error,
+        summary: exec.result.summary,
+      } : undefined,
+    };
+  }
+
+  listExecutions(statusFilter?: "running" | "completed" | "failed" | "cancelled"): ExecutionListItem[] {
+    const executions: ExecutionListItem[] = [];
+
+    for (const exec of this.executions.values()) {
+      if (statusFilter && exec.status !== statusFilter) {
+        continue;
+      }
+
+      executions.push({
+        id: exec.id,
+        pipelineId: exec.pipelineId,
+        pipelineName: exec.pipelineName,
+        status: exec.status,
+        startTime: exec.startTime,
+        currentStage: exec.currentStage,
+        totalStages: exec.totalStages,
+        inputPreview: exec.inputPreview,
+      });
+    }
+
+    // Sort by startTime descending (most recent first)
+    return executions.sort((a, b) => b.startTime - a.startTime);
+  }
+
+  getRunningCount(): number {
+    let count = 0;
+    for (const exec of this.executions.values()) {
+      if (exec.status === "running") {
+        count++;
+      }
+    }
+    return count;
+  }
+
   private broadcast(executionId: string, event: ExecutionEvent): void {
     const execution = this.executions.get(executionId);
     if (!execution) return;
@@ -213,6 +439,73 @@ class ExecutionManager {
     if (execution && execution.status !== "running") {
       this.executions.delete(executionId);
     }
+  }
+
+  private async loadHistory(): Promise<ExecutionHistoryRecord[]> {
+    try {
+      const file = Bun.file(HISTORY_FILE);
+      if (await file.exists()) {
+        const content = await file.text();
+        return JSON.parse(content);
+      }
+    } catch (error) {
+      console.error("Failed to load execution history:", error);
+    }
+    return [];
+  }
+
+  private async saveToHistory(exec: ActiveExecution): Promise<void> {
+    try {
+      const history = await this.loadHistory();
+
+      const record: ExecutionHistoryRecord = {
+        id: exec.id,
+        pipelineId: exec.pipelineId,
+        pipelineName: exec.pipelineName,
+        status: exec.status as "completed" | "failed" | "cancelled",
+        startTime: exec.startTime,
+        endTime: Date.now(),
+        duration: exec.result?.summary?.totalDuration || (Date.now() - exec.startTime),
+        totalStages: exec.totalStages,
+        stagesRun: exec.result?.summary?.stagesRun || 0,
+        stagesSkipped: exec.result?.summary?.stagesSkipped || 0,
+        stagesFailed: exec.result?.summary?.stagesFailed || 0,
+        inputPreview: exec.inputPreview,
+        totalCost: exec.result?.summary?.totalCost || 0,
+        error: exec.result?.error,
+      };
+
+      // Add to beginning of array (most recent first)
+      history.unshift(record);
+
+      // Keep only last 1000 records
+      const trimmedHistory = history.slice(0, 1000);
+
+      await Bun.write(HISTORY_FILE, JSON.stringify(trimmedHistory, null, 2));
+    } catch (error) {
+      console.error("Failed to save execution to history:", error);
+    }
+  }
+
+  async getHistoryPage(page: number = 1, pageSize: number = 20): Promise<ExecutionHistoryPage> {
+    const history = await this.loadHistory();
+    const total = history.length;
+    const totalPages = Math.ceil(total / pageSize);
+    const start = (page - 1) * pageSize;
+    const executions = history.slice(start, start + pageSize);
+
+    return {
+      executions,
+      total,
+      page,
+      pageSize,
+      totalPages,
+    };
+  }
+
+  async getHistoryRecord(executionId: string): Promise<ExecutionHistoryRecord | undefined> {
+    const history = await this.loadHistory();
+    return history.find(h => h.id === executionId);
   }
 }
 

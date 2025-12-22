@@ -111,12 +111,28 @@
     return modelId;
   }
 
+  function formatAnyOutput(val: unknown): string {
+    if (!val) return "";
+    if (typeof val === "object") {
+      return JSON.stringify(val, null, 2);
+    }
+    if (typeof val === "string") {
+      try {
+        const parsed = JSON.parse(val);
+        return JSON.stringify(parsed, null, 2);
+      } catch {
+        return val;
+      }
+    }
+    return String(val);
+  }
+
   function getFinalOutput(): string {
     if (!output) return "";
     const out = output.output;
-    if (out.optimizedPrompt) return out.optimizedPrompt;
-    if (out.refinedPrompt) return out.refinedPrompt;
-    if (out.enhancedPrompt) return out.enhancedPrompt;
+    if (out.optimizedPrompt) return String(out.optimizedPrompt);
+    if (out.refinedPrompt) return String(out.refinedPrompt);
+    if (out.enhancedPrompt) return String(out.enhancedPrompt);
     if (out["stage-3-generate"]?.pipelineConfig) {
       return JSON.stringify(out["stage-3-generate"].pipelineConfig, null, 2);
     }
@@ -260,7 +276,7 @@
                 </div>
 
                 {#if showRaw[stage.stageId]}
-                  <pre class="text-xs whitespace-pre-wrap bg-slate-800 text-slate-100 p-4 rounded-lg overflow-x-auto max-h-96">{stage.output}</pre>
+                  <pre class="text-xs whitespace-pre-wrap bg-slate-800 text-slate-100 p-4 rounded-lg overflow-x-auto max-h-96">{formatAnyOutput(stage.output)}</pre>
                 {:else if stage.parsedOutput}
                   <pre class="text-xs whitespace-pre-wrap bg-slate-800 text-slate-100 p-4 rounded-lg overflow-x-auto max-h-96">{JSON.stringify(stage.parsedOutput, null, 2)}</pre>
                 {:else}

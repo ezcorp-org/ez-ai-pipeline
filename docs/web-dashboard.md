@@ -74,19 +74,47 @@ The Outputs section shows all past execution results:
 
 The dashboard remembers your last 3 executions (stored in browser localStorage). This history persists across page reloads.
 
-## API Key Configuration
+## Execution Modes
 
-The dashboard checks for the `ANTHROPIC_API_KEY` environment variable. If not set, you'll see a warning with setup instructions:
+The dashboard supports two execution modes:
 
+### API Mode (Default)
+
+Uses your Anthropic API key to call Claude directly. This is the recommended mode for production use.
+
+**Setup:**
 ```bash
-# Option 1: Set environment variable
+# Set environment variable
 ANTHROPIC_API_KEY=sk-... bun run web
 
-# Option 2: Use the CLI to save the key
+# Or use the CLI to save the key
 ez-ai-pipeline set-key
 ```
 
 The API key is never sent to the browser - all API calls happen server-side.
+
+### CLI Mode
+
+Uses installed AI CLI tools (Claude Code, OpenCode, or Aider) instead of API keys. This is great for local development when you already have CLI tools authenticated.
+
+**Supported CLI Tools:**
+
+| Tool | Command | Description |
+|------|---------|-------------|
+| Claude Code | `claude` | Anthropic's official CLI |
+| OpenCode | `opencode` | Alternative AI coding assistant |
+| Aider | `aider` | AI pair programming tool |
+
+**How it works:**
+1. The dashboard auto-detects which CLI tools are installed
+2. Select "CLI Tool" mode in the execution form
+3. Choose your preferred tool from the dropdown
+4. Pipeline stages will shell out to the CLI instead of calling APIs
+
+**Benefits:**
+- No API key required if CLI tool is already authenticated
+- Uses your existing CLI configuration and credits
+- Great for testing without burning API credits
 
 ## REST API
 
@@ -103,24 +131,34 @@ The web server exposes a REST API for programmatic access:
 | POST | `/api/executions/:id/cancel` | Cancel execution |
 | GET | `/api/outputs` | List all outputs |
 | GET | `/api/outputs/:filename` | Get specific output |
-| GET | `/api/config/status` | Check API key status |
+| GET | `/api/config/status` | Check API key and CLI tools status |
 
 ### Example: Running a Pipeline via curl
 
 ```bash
-# Start execution
+# Start execution with API mode (default)
 curl -X POST http://localhost:3000/api/pipelines/prompt-optimizer/run \
   -H "Content-Type: application/json" \
   -d '{"input": "Your prompt to optimize"}'
+
+# Start execution with CLI mode
+curl -X POST http://localhost:3000/api/pipelines/prompt-optimizer/run \
+  -H "Content-Type: application/json" \
+  -d '{"input": "Your prompt to optimize", "executionMode": "cli", "cliTool": "claude"}'
 
 # Response
 {
   "executionId": "exec_1234567890_abc123",
   "pipelineId": "prompt-optimizer",
-  "status": "started"
+  "status": "started",
+  "executionMode": "api"
 }
 
-# Check status
+# Check config status (API key and CLI tools)
+curl http://localhost:3000/api/config/status
+# Response: {"hasApiKey": true, "cliTools": {"claude": {"available": true, "version": "2.0.73"}, ...}}
+
+# Check execution status
 curl http://localhost:3000/api/executions/exec_1234567890_abc123
 
 # Cancel if needed

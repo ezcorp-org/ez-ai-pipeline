@@ -5,6 +5,8 @@
   import PipelineDetail from "./pipelines/PipelineDetail.svelte";
   import OutputList from "./outputs/OutputList.svelte";
   import OutputDetail from "./outputs/OutputDetail.svelte";
+  import RunningExecutions from "./execution/RunningExecutions.svelte";
+  import ExecutionDetail from "./execution/ExecutionDetail.svelte";
 
   let currentPath = $state(window.location.pathname);
 
@@ -25,6 +27,8 @@
     if (currentPath === "/" || currentPath === "") return "dashboard";
     if (currentPath === "/pipelines") return "pipelines";
     if (currentPath.startsWith("/pipelines/")) return "pipeline-detail";
+    if (currentPath === "/running") return "running";
+    if (currentPath.startsWith("/executions/")) return "execution-detail";
     if (currentPath === "/outputs") return "outputs";
     if (currentPath.startsWith("/outputs/")) return "output-detail";
     return "dashboard";
@@ -38,9 +42,14 @@
     return currentPath.replace("/outputs/", "");
   }
 
+  function getExecutionId(): string {
+    return currentPath.replace("/executions/", "");
+  }
+
   let view = $derived(getView());
   let pipelineId = $derived(getPipelineId());
   let outputFilename = $derived(getOutputFilename());
+  let executionId = $derived(getExecutionId());
 </script>
 
 <div class="flex min-h-screen">
@@ -53,6 +62,10 @@
       <PipelineList {navigate} />
     {:else if view === "pipeline-detail"}
       <PipelineDetail id={pipelineId} {navigate} />
+    {:else if view === "running"}
+      <RunningExecutions {navigate} />
+    {:else if view === "execution-detail"}
+      <ExecutionDetail {executionId} {navigate} />
     {:else if view === "outputs"}
       <OutputList {navigate} />
     {:else if view === "output-detail"}

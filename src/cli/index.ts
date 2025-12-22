@@ -29,7 +29,7 @@ export function createCLI() {
     .example("$0 validate -p my-pipeline", "Validate a pipeline configuration")
     .example("$0 init my-new-pipeline", "Create a new pipeline from template")
     .example("$0 web", "Start the Pipeline Viewer web interface")
-    .epilogue("For more information, visit https://github.com/your-repo/ez-ai-pipeline");
+    .epilogue("For more information, visit https://github.com/ezcorp-org/ez-ai-pipeline");
 }
 
 export async function runCLI(): Promise<void> {

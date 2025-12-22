@@ -3,7 +3,8 @@ import type { PipelineResult, PipelineResultStatus, StageResult } from "@typings
 import type { Stage } from "@typings/stage.ts";
 import { PipelineContext } from "@core/context.ts";
 import { SessionManager } from "@core/session.ts";
-import { StageRunner } from "@core/stage-runner.ts";
+import { StageRunner, type ExecutionMode } from "@core/stage-runner.ts";
+import type { CLISessionOptions } from "@core/cli-session.ts";
 
 export interface ExecutorCallbacks {
   onPipelineStart?: (config: PipelineConfig, input: string) => void;
@@ -14,7 +15,13 @@ export interface ExecutorCallbacks {
   onStageComplete?: (stage: Stage, result: StageResult) => void;
   onStageSkipped?: (stage: Stage, reason: string) => void;
   onStageFailed?: (stage: Stage, error: Error) => void;
+  onStageOutput?: (stage: Stage, output: string, isFinal: boolean) => void;
   onProgress?: (current: number, total: number, stageName: string) => void;
+}
+
+export interface ExecutorOptions {
+  executionMode?: ExecutionMode;
+  cliOptions?: CLISessionOptions;
 }
 
 export class PipelineExecutor {
@@ -22,16 +29,21 @@ export class PipelineExecutor {
   private stageRunner: StageRunner;
   private callbacks: ExecutorCallbacks;
   private context: PipelineContext | null = null;
+  private options: ExecutorOptions;
 
-  constructor(callbacks: ExecutorCallbacks = {}) {
+  constructor(callbacks: ExecutorCallbacks = {}, options: ExecutorOptions = {}) {
     this.session = new SessionManager();
     this.callbacks = callbacks;
+    this.options = options;
     this.stageRunner = new StageRunner(this.session, {
       enableEarlyExit: true,
+      executionMode: options.executionMode,
+      cliOptions: options.cliOptions,
       onStageStart: callbacks.onStageStart,
       onStageComplete: callbacks.onStageComplete,
       onStageSkipped: callbacks.onStageSkipped,
       onStageFailed: callbacks.onStageFailed,
+      onStageOutput: callbacks.onStageOutput,
     });
   }
 
@@ -182,6 +194,9 @@ export class PipelineExecutor {
 }
 
 // Factory function for creating executors with specific configurations
-export function createExecutor(callbacks: ExecutorCallbacks = {}): PipelineExecutor {
-  return new PipelineExecutor(callbacks);
+export function createExecutor(
+  callbacks: ExecutorCallbacks = {},
+  options: ExecutorOptions = {}
+): PipelineExecutor {
+  return new PipelineExecutor(callbacks, options);
 }

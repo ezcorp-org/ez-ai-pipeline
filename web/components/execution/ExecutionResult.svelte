@@ -17,20 +17,27 @@
 
   let showFullOutput = $state(false);
 
-  function formatOutput(output: string | undefined): string {
+  function formatOutput(output: unknown): string {
     if (!output) return '';
-    // Try to parse as JSON for pretty printing
-    try {
-      const parsed = JSON.parse(output);
-      return JSON.stringify(parsed, null, 2);
-    } catch {
-      return output;
+    // If it's already an object, stringify it
+    if (typeof output === 'object') {
+      return JSON.stringify(output, null, 2);
     }
+    // If it's a string, try to parse as JSON for pretty printing
+    if (typeof output === 'string') {
+      try {
+        const parsed = JSON.parse(output);
+        return JSON.stringify(parsed, null, 2);
+      } catch {
+        return output;
+      }
+    }
+    return String(output);
   }
 
   function copyToClipboard() {
     if (result.output) {
-      navigator.clipboard.writeText(result.output);
+      navigator.clipboard.writeText(formatOutput(result.output));
     }
   }
 </script>

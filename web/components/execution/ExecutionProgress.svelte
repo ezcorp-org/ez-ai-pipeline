@@ -9,6 +9,7 @@
     duration?: number;
     cost?: number;
     error?: string;
+    output?: string;
   }
 
   interface ExecutionResult {
@@ -35,6 +36,25 @@
   let result = $state<ExecutionResult | null>(null);
   let wsStatus = $state<'connecting' | 'connected' | 'disconnected'>('connecting');
   let totalCost = $state(0);
+  let expandedStages = $state<Set<string>>(new Set());
+
+  function toggleStage(stageId: string) {
+    const newSet = new Set(expandedStages);
+    if (newSet.has(stageId)) {
+      newSet.delete(stageId);
+    } else {
+      newSet.add(stageId);
+    }
+    expandedStages = newSet;
+  }
+
+  function autoExpandStage(stageId: string) {
+    if (!expandedStages.has(stageId)) {
+      const newSet = new Set(expandedStages);
+      newSet.add(stageId);
+      expandedStages = newSet;
+    }
+  }
 
   $effect(() => {
     if (!executionId) return;
@@ -75,6 +95,7 @@
             status: 'running',
           }];
         }
+        autoExpandStage(data.stage.id);
       }
 
       if (data.type === 'stage:completed') {
@@ -115,6 +136,17 @@
             status: 'failed',
             error: data.error,
           };
+        }
+      }
+
+      if (data.type === 'stage:output') {
+        const index = stages.findIndex(s => s.id === data.stageId);
+        if (index >= 0) {
+          stages[index] = {
+            ...stages[index],
+            output: data.output,
+          };
+          autoExpandStage(data.stageId);
         }
       }
 
@@ -179,7 +211,7 @@
 
   <div class="space-y-2">
     {#each stages as stage, index}
-      <StageStatus {stage} {index} />
+      <StageStatus {stage} {index} expanded={expandedStages.has(stage.id)} onToggle={() => toggleStage(stage.id)} />
     {:else}
       <div class="text-center text-slate-500 py-8">
         Waiting for stages to start...

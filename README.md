@@ -29,10 +29,14 @@ npx @ez-corp/ez-ai-pipeline --help
 
 ## Quick Start
 
-### 1. Set up your API key
+### 1. Set up your API key (or use CLI mode)
 
 ```bash
+# Option A: Use your Anthropic API key
 export ANTHROPIC_API_KEY="your-api-key"
+
+# Option B: Use CLI mode with Claude Code (no API key needed)
+# Just have Claude Code installed and authenticated
 ```
 
 ### 2. Run an included pipeline
@@ -99,15 +103,23 @@ Opens a local web interface to browse pipelines and execute them directly in you
 - **Cost Tracking**: See costs accumulate as each stage finishes
 - **View Outputs**: Browse all pipeline execution results
 - **Stage Details**: Explore stage-by-stage outputs and configurations
+- **CLI Mode**: Use Claude Code, OpenCode, or Aider instead of API keys
+
+**Execution Modes:**
+- **API Mode**: Uses your Anthropic API key (default when ANTHROPIC_API_KEY is set)
+- **CLI Mode**: Shells out to Claude Code, OpenCode, or Aider (no API key required)
+
+The dashboard auto-detects installed CLI tools and lets you choose your preferred execution mode.
 
 **Running Pipelines from the Web:**
 
 1. Start the web dashboard: `ez-ai-pipeline web`
 2. Navigate to a pipeline from the sidebar
-3. Enter your prompt in the textarea
-4. Click "Run Pipeline" or press `Ctrl+Enter`
-5. Watch real-time progress as each stage executes
-6. View the final optimized output
+3. Select execution mode (API or CLI) and tool if using CLI mode
+4. Enter your prompt in the textarea
+5. Click "Run Pipeline" or press `Ctrl+Enter`
+6. Watch real-time progress as each stage executes
+7. View the final optimized output
 
 **Keyboard Shortcuts:**
 - `Ctrl+Enter` - Run the pipeline

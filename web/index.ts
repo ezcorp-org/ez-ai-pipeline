@@ -1,6 +1,7 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { executionManager, type WebSocketData } from "./execution.ts";
+import { checkCLIAvailability } from "../src/core/cli-session.ts";
 
 const PIPELINES_DIR = join(import.meta.dir, "../pipelines");
 const OUTPUTS_DIR = join(import.meta.dir, "../outputs");
@@ -138,11 +139,21 @@ const server = Bun.serve<WebSocketData>({
 
     // API routes
 
-    // Config status - check if API key is present
+    // Config status - check if API key is present and CLI tools available
     if (path === "/api/config/status") {
+      const [claudeStatus, opencodeStatus, aiderStatus] = await Promise.all([
+        checkCLIAvailability("claude"),
+        checkCLIAvailability("opencode"),
+        checkCLIAvailability("aider"),
+      ]);
+
       return Response.json({
         hasApiKey: !!process.env.ANTHROPIC_API_KEY,
-        // Never expose the actual key
+        cliTools: {
+          claude: claudeStatus,
+          opencode: opencodeStatus,
+          aider: aiderStatus,
+        },
       });
     }
 
@@ -162,6 +173,8 @@ const server = Bun.serve<WebSocketData>({
       try {
         const body = await req.json();
         const input = body?.input;
+        const executionMode = body?.executionMode as "api" | "cli" | undefined;
+        const cliTool = body?.cliTool as "claude" | "opencode" | "aider" | "custom" | undefined;
 
         if (!input || typeof input !== "string" || input.trim() === "") {
           return Response.json(
@@ -170,15 +183,37 @@ const server = Bun.serve<WebSocketData>({
           );
         }
 
+        // Validate execution requirements
+        if (executionMode === "api" && !process.env.ANTHROPIC_API_KEY) {
+          return Response.json(
+            { error: "API mode requires ANTHROPIC_API_KEY environment variable" },
+            { status: 400 }
+          );
+        }
+
+        if (executionMode === "cli" && cliTool) {
+          const cliStatus = await checkCLIAvailability(cliTool);
+          if (!cliStatus.available) {
+            return Response.json(
+              { error: `CLI tool '${cliTool}' is not available: ${cliStatus.error}` },
+              { status: 400 }
+            );
+          }
+        }
+
         const executionId = executionManager.generateExecutionId();
 
         // Start execution asynchronously (don't await)
-        executionManager.start(executionId, pipeline, input.trim());
+        executionManager.start(executionId, pipeline, input.trim(), {
+          executionMode: executionMode ?? (process.env.ANTHROPIC_API_KEY ? "api" : "cli"),
+          cliOptions: executionMode === "cli" ? { cliTool: cliTool ?? "claude" } : undefined,
+        });
 
         return Response.json({
           executionId,
           pipelineId: pipeline.pipeline.id,
           status: "started",
+          executionMode: executionMode ?? (process.env.ANTHROPIC_API_KEY ? "api" : "cli"),
         });
       } catch (e) {
         return Response.json(
@@ -198,6 +233,27 @@ const server = Bun.serve<WebSocketData>({
       return Response.json(pipeline);
     }
 
+    // GET /api/executions - List all active executions
+    if (path === "/api/executions") {
+      const executions = executionManager.listExecutions();
+      return Response.json({ executions });
+    }
+
+    // GET /api/executions/running - List only running executions
+    if (path === "/api/executions/running") {
+      const executions = executionManager.listExecutions("running");
+      const count = executionManager.getRunningCount();
+      return Response.json({ executions, count });
+    }
+
+    // GET /api/executions/history - Get paginated execution history
+    if (path === "/api/executions/history") {
+      const page = parseInt(url.searchParams.get("page") || "1");
+      const pageSize = parseInt(url.searchParams.get("pageSize") || "20");
+      const history = await executionManager.getHistoryPage(page, pageSize);
+      return Response.json(history);
+    }
+
     // POST /api/executions/:id/cancel - Cancel a running execution
     if (req.method === "POST" && path.match(/^\/api\/executions\/[^/]+\/cancel$/)) {
       const executionId = path.split("/")[3];
@@ -205,26 +261,46 @@ const server = Bun.serve<WebSocketData>({
       return Response.json({ cancelled });
     }
 
-    // GET /api/executions/:id - Get execution status
+    // GET /api/executions/:id - Get full execution details with stages
     if (path.match(/^\/api\/executions\/[^/]+$/)) {
       const executionId = path.split("/")[3];
-      const execution = executionManager.getExecution(executionId);
-      if (!execution) {
-        return Response.json({ error: "Execution not found" }, { status: 404 });
+
+      // First check in-memory (active/recent) executions
+      const execution = executionManager.getExecutionDetail(executionId);
+      if (execution) {
+        return Response.json(execution);
       }
-      return Response.json({
-        id: execution.id,
-        pipelineId: execution.pipelineId,
-        status: execution.status,
-        startTime: execution.startTime,
-        result: execution.result ? {
-          status: execution.result.status,
-          pipelineId: execution.result.pipelineId,
-          summary: execution.result.summary,
-          output: execution.result.output,
-          error: execution.result.error,
-        } : undefined,
-      });
+
+      // If not found, check history
+      const historyRecord = await executionManager.getHistoryRecord(executionId);
+      if (historyRecord) {
+        // Return history record in a compatible format
+        return Response.json({
+          id: historyRecord.id,
+          pipelineId: historyRecord.pipelineId,
+          pipelineName: historyRecord.pipelineName,
+          status: historyRecord.status,
+          startTime: historyRecord.startTime,
+          currentStage: historyRecord.stagesRun,
+          totalStages: historyRecord.totalStages,
+          input: historyRecord.inputPreview,
+          stages: [], // History doesn't store stage details
+          isHistorical: true,
+          result: {
+            status: historyRecord.status,
+            error: historyRecord.error,
+            summary: {
+              totalDuration: historyRecord.duration,
+              totalCost: historyRecord.totalCost,
+              stagesRun: historyRecord.stagesRun,
+              stagesSkipped: historyRecord.stagesSkipped,
+              stagesFailed: historyRecord.stagesFailed,
+            },
+          },
+        });
+      }
+
+      return Response.json({ error: "Execution not found" }, { status: 404 });
     }
 
     if (path === "/api/outputs") {
