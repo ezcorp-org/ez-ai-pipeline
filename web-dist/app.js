@@ -10053,7 +10053,37 @@ var root_224 = from_html(`
         </div>
       `, 1);
 var root_252 = from_html(`
-          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="prose prose-slate max-w-none">
+              <pre class="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 bg-slate-50 rounded-lg p-4 max-h-[32rem] overflow-y-auto"> </pre>
+            </div>
+          `, 1);
+var root_27 = from_html(`
+            <pre class="text-sm bg-slate-800 text-slate-100 rounded-lg p-4 overflow-x-auto max-h-[32rem] overflow-y-auto font-mono"> </pre>
+          `, 1);
+var root_282 = from_html(`
+            <pre class="text-sm text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded-lg p-4 max-h-[32rem] overflow-y-auto font-mono"> </pre>
+          `, 1);
+var root_244 = from_html(`
+      <div class="bg-white rounded-xl border border-slate-200 mb-6 overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50">
+          <div class="flex items-center gap-2">
+            <span class="text-green-600 text-lg">✨</span>
+            <h3 class="font-semibold text-slate-800"> </h3>
+          </div>
+          <button class="text-sm px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            Copy
+          </button>
+        </div>
+        <div class="p-4">
+          <!>
+        </div>
+      </div>
+    `, 1);
+var root_30 = from_html(`
+          <div class="grid grid-cols-3 gap-4">
             <div class="bg-slate-50 rounded-lg p-3">
               <div class="text-xs text-slate-500">Duration</div>
               <div class="font-medium"> </div>
@@ -10068,30 +10098,22 @@ var root_252 = from_html(`
             </div>
           </div>
         `, 1);
-var root_262 = from_html(`
-          <div>
-            <div class="text-xs font-medium text-slate-500 mb-2">Final Output</div>
-            <pre class="text-sm text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded-lg p-3 max-h-96 overflow-y-auto font-mono"> </pre>
-          </div>
-        `, 1);
-var root_27 = from_html(`
+var root_31 = from_html(`
           <div class="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
             <div class="text-xs font-medium text-red-500 mb-1">Error</div>
             <div class="text-sm text-red-700"> </div>
           </div>
         `, 1);
-var root_244 = from_html(`
+var root_29 = from_html(`
       <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
-        <h3 class="text-sm font-medium text-slate-700 mb-3">Result</h3>
-
-        <!>
+        <h3 class="text-sm font-medium text-slate-700 mb-3">Execution Summary</h3>
 
         <!>
 
         <!>
       </div>
     `, 1);
-var root_282 = from_html(`
+var root_322 = from_html(`
         <button class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
           Cancel Execution
         </button>
@@ -10137,7 +10159,10 @@ var root_69 = from_html(`
       <!>
     </div>
 
-    <!-- Final Result -->
+    <!-- Final Output - Main Result -->
+    <!>
+
+    <!-- Result Summary -->
     <!>
 
     <!-- Actions -->
@@ -10327,6 +10352,64 @@ function ExecutionDetail($$anchor, $$props) {
     }
     return String(output);
   }
+  function getFinalOutput(output) {
+    if (!output || typeof output !== "object")
+      return null;
+    const out = output;
+    if (out._extractedFinalOutput) {
+      const extracted = out._extractedFinalOutput;
+      return extracted;
+    }
+    const finalizeStage = out["stage-6-finalize"];
+    if (finalizeStage?.optimizedPrompt) {
+      return {
+        type: "text",
+        content: String(finalizeStage.optimizedPrompt),
+        label: "Optimized Prompt"
+      };
+    }
+    if (out.optimizedPrompt) {
+      return {
+        type: "text",
+        content: String(out.optimizedPrompt),
+        label: "Optimized Prompt"
+      };
+    }
+    if (out.refinedPrompt) {
+      return {
+        type: "text",
+        content: String(out.refinedPrompt),
+        label: "Refined Prompt"
+      };
+    }
+    if (out.enhancedPrompt) {
+      return {
+        type: "text",
+        content: String(out.enhancedPrompt),
+        label: "Enhanced Prompt"
+      };
+    }
+    if (out.generatedCode) {
+      return {
+        type: "code",
+        content: String(out.generatedCode),
+        label: "Generated Code"
+      };
+    }
+    const generateStage = out["stage-3-generate"];
+    if (generateStage?.pipelineConfig) {
+      return {
+        type: "code",
+        content: JSON.stringify(generateStage.pipelineConfig, null, 2),
+        label: "Generated Pipeline"
+      };
+    }
+    return {
+      type: "json",
+      content: JSON.stringify(output, null, 2),
+      label: "Output"
+    };
+  }
   function formatElapsed(startTime) {
     const elapsed2 = Date.now() - startTime;
     return formatDuration(elapsed2);
@@ -10348,6 +10431,7 @@ function ExecutionDetail($$anchor, $$props) {
     }
   }
   let totalCost = user_derived(() => get(execution)?.result?.summary?.totalCost || get(execution)?.stages.reduce((sum, s) => sum + (s.cost || 0), 0) || 0);
+  let finalOutput = user_derived(() => get(execution)?.result?.output ? getFinalOutput(get(execution).result.output) : null);
   let elapsed = state("");
   user_effect(() => {
     if (!get(execution))
@@ -10410,7 +10494,7 @@ function ExecutionDetail($$anchor, $$props) {
       next(2);
       append($$anchor2, fragment_2);
     };
-    var alternate_8 = ($$anchor2) => {
+    var alternate_10 = ($$anchor2) => {
       var fragment_3 = comment();
       var node_3 = first_child(fragment_3);
       {
@@ -10428,11 +10512,11 @@ function ExecutionDetail($$anchor, $$props) {
           template_effect(() => set_text(text_3, get(error)));
           append($$anchor3, fragment_4);
         };
-        var alternate_7 = ($$anchor3) => {
+        var alternate_9 = ($$anchor3) => {
           var fragment_5 = comment();
           var node_4 = first_child(fragment_5);
           {
-            var consequent_17 = ($$anchor4) => {
+            var consequent_19 = ($$anchor4) => {
               var fragment_6 = root_69();
               var node_5 = sibling(first_child(fragment_6));
               var div_4 = sibling(node_5, 2);
@@ -10660,39 +10744,124 @@ function ExecutionDetail($$anchor, $$props) {
               var node_20 = sibling(div_15, 2);
               var node_21 = sibling(node_20, 2);
               {
-                var consequent_15 = ($$anchor5) => {
+                var consequent_14 = ($$anchor5) => {
                   var fragment_24 = root_244();
                   var div_18 = sibling(first_child(fragment_24));
-                  var node_22 = sibling(child(div_18), 3);
+                  var div_19 = sibling(child(div_18));
+                  var div_20 = sibling(child(div_19));
+                  var h3 = sibling(child(div_20), 3);
+                  var text_8 = child(h3, true);
+                  reset(h3);
+                  next();
+                  reset(div_20);
+                  var button_2 = sibling(div_20, 2);
+                  button_2.__click = () => {
+                    navigator.clipboard.writeText(get(finalOutput).content);
+                  };
+                  next();
+                  reset(div_19);
+                  var div_21 = sibling(div_19, 2);
+                  var node_22 = sibling(child(div_21));
                   {
                     var consequent_12 = ($$anchor6) => {
                       var fragment_25 = root_252();
-                      var div_19 = sibling(first_child(fragment_25));
-                      var div_20 = sibling(child(div_19));
-                      var div_21 = sibling(child(div_20), 3);
-                      var text_8 = child(div_21, true);
-                      reset(div_21);
-                      next();
-                      reset(div_20);
-                      var div_22 = sibling(div_20, 2);
-                      var div_23 = sibling(child(div_22), 3);
-                      var text_9 = child(div_23, true);
-                      reset(div_23);
+                      var div_22 = sibling(first_child(fragment_25));
+                      var pre_1 = sibling(child(div_22));
+                      var text_9 = child(pre_1, true);
+                      reset(pre_1);
                       next();
                       reset(div_22);
-                      var div_24 = sibling(div_22, 2);
-                      var div_25 = sibling(child(div_24), 3);
-                      var text_10 = child(div_25);
+                      next();
+                      template_effect(() => set_text(text_9, get(finalOutput).content));
+                      append($$anchor6, fragment_25);
+                    };
+                    var alternate_8 = ($$anchor6) => {
+                      var fragment_26 = comment();
+                      var node_23 = first_child(fragment_26);
+                      {
+                        var consequent_13 = ($$anchor7) => {
+                          var fragment_27 = root_27();
+                          var pre_2 = sibling(first_child(fragment_27));
+                          var text_10 = child(pre_2, true);
+                          reset(pre_2);
+                          next();
+                          template_effect(() => set_text(text_10, get(finalOutput).content));
+                          append($$anchor7, fragment_27);
+                        };
+                        var alternate_7 = ($$anchor7) => {
+                          var fragment_28 = root_282();
+                          var pre_3 = sibling(first_child(fragment_28));
+                          var text_11 = child(pre_3, true);
+                          reset(pre_3);
+                          next();
+                          template_effect(() => set_text(text_11, get(finalOutput).content));
+                          append($$anchor7, fragment_28);
+                        };
+                        if_block(node_23, ($$render) => {
+                          if (get(finalOutput).type === "code")
+                            $$render(consequent_13);
+                          else
+                            $$render(alternate_7, false);
+                        }, true);
+                      }
+                      append($$anchor6, fragment_26);
+                    };
+                    if_block(node_22, ($$render) => {
+                      if (get(finalOutput).type === "text")
+                        $$render(consequent_12);
+                      else
+                        $$render(alternate_8, false);
+                    });
+                  }
+                  next();
+                  reset(div_21);
+                  next();
+                  reset(div_18);
+                  next();
+                  template_effect(() => set_text(text_8, get(finalOutput).label));
+                  append($$anchor5, fragment_24);
+                };
+                if_block(node_21, ($$render) => {
+                  if (get(finalOutput))
+                    $$render(consequent_14);
+                });
+              }
+              var node_24 = sibling(node_21, 2);
+              var node_25 = sibling(node_24, 2);
+              {
+                var consequent_17 = ($$anchor5) => {
+                  var fragment_29 = root_29();
+                  var div_23 = sibling(first_child(fragment_29));
+                  var node_26 = sibling(child(div_23), 3);
+                  {
+                    var consequent_15 = ($$anchor6) => {
+                      var fragment_30 = root_30();
+                      var div_24 = sibling(first_child(fragment_30));
+                      var div_25 = sibling(child(div_24));
+                      var div_26 = sibling(child(div_25), 3);
+                      var text_12 = child(div_26, true);
+                      reset(div_26);
+                      next();
                       reset(div_25);
+                      var div_27 = sibling(div_25, 2);
+                      var div_28 = sibling(child(div_27), 3);
+                      var text_13 = child(div_28, true);
+                      reset(div_28);
+                      next();
+                      reset(div_27);
+                      var div_29 = sibling(div_27, 2);
+                      var div_30 = sibling(child(div_29), 3);
+                      var text_14 = child(div_30);
+                      reset(div_30);
+                      next();
+                      reset(div_29);
                       next();
                       reset(div_24);
                       next();
-                      reset(div_19);
-                      next();
                       template_effect(($0, $1) => {
-                        set_text(text_8, $0);
-                        set_text(text_9, $1);
-                        set_text(text_10, `
+                        set_text(text_12, $0);
+                        set_text(text_13, $1);
+                        set_text(text_14, `
                 ${get(execution).result.summary.stagesRun ?? ""} run,
                 ${get(execution).result.summary.stagesSkipped ?? ""} skipped,
                 ${get(execution).result.summary.stagesFailed ?? ""} failed
@@ -10701,83 +10870,64 @@ function ExecutionDetail($$anchor, $$props) {
                         () => formatDuration(get(execution).result.summary.totalDuration),
                         () => formatCost(get(execution).result.summary.totalCost)
                       ]);
-                      append($$anchor6, fragment_25);
+                      append($$anchor6, fragment_30);
                     };
-                    if_block(node_22, ($$render) => {
+                    if_block(node_26, ($$render) => {
                       if (get(execution).result.summary)
-                        $$render(consequent_12);
+                        $$render(consequent_15);
                     });
                   }
-                  var node_23 = sibling(node_22, 2);
+                  var node_27 = sibling(node_26, 2);
                   {
-                    var consequent_13 = ($$anchor6) => {
-                      var fragment_26 = root_262();
-                      var div_26 = sibling(first_child(fragment_26));
-                      var pre_1 = sibling(child(div_26), 3);
-                      var text_11 = child(pre_1, true);
-                      reset(pre_1);
+                    var consequent_16 = ($$anchor6) => {
+                      var fragment_31 = root_31();
+                      var div_31 = sibling(first_child(fragment_31));
+                      var div_32 = sibling(child(div_31), 3);
+                      var text_15 = child(div_32, true);
+                      reset(div_32);
                       next();
-                      reset(div_26);
+                      reset(div_31);
                       next();
-                      template_effect(($0) => set_text(text_11, $0), [() => formatOutput(get(execution).result.output)]);
-                      append($$anchor6, fragment_26);
+                      template_effect(() => set_text(text_15, get(execution).result.error));
+                      append($$anchor6, fragment_31);
                     };
-                    if_block(node_23, ($$render) => {
-                      if (get(execution).result.output)
-                        $$render(consequent_13);
-                    });
-                  }
-                  var node_24 = sibling(node_23, 2);
-                  {
-                    var consequent_14 = ($$anchor6) => {
-                      var fragment_27 = root_27();
-                      var div_27 = sibling(first_child(fragment_27));
-                      var div_28 = sibling(child(div_27), 3);
-                      var text_12 = child(div_28, true);
-                      reset(div_28);
-                      next();
-                      reset(div_27);
-                      next();
-                      template_effect(() => set_text(text_12, get(execution).result.error));
-                      append($$anchor6, fragment_27);
-                    };
-                    if_block(node_24, ($$render) => {
+                    if_block(node_27, ($$render) => {
                       if (get(execution).result.error)
-                        $$render(consequent_14);
+                        $$render(consequent_16);
                     });
                   }
                   next();
-                  reset(div_18);
+                  reset(div_23);
                   next();
-                  append($$anchor5, fragment_24);
+                  append($$anchor5, fragment_29);
                 };
-                if_block(node_21, ($$render) => {
+                if_block(node_25, ($$render) => {
                   if (get(execution).result)
-                    $$render(consequent_15);
+                    $$render(consequent_17);
                 });
               }
-              var node_25 = sibling(node_21, 2);
-              var div_29 = sibling(node_25, 2);
-              var button_2 = sibling(child(div_29));
-              button_2.__click = () => $$props.navigate(`/pipelines/${get(execution).pipelineId}`);
-              var node_26 = sibling(button_2, 2);
+              var node_28 = sibling(node_25, 2);
+              var div_33 = sibling(node_28, 2);
+              var button_3 = sibling(child(div_33));
+              button_3.__click = () => $$props.navigate(`/pipelines/${get(execution).pipelineId}`);
+              var node_29 = sibling(button_3, 2);
               {
-                var consequent_16 = ($$anchor5) => {
-                  var fragment_28 = root_282();
-                  var button_3 = sibling(first_child(fragment_28));
-                  button_3.__click = async () => {
+                var consequent_18 = ($$anchor5) => {
+                  var fragment_32 = root_322();
+                  var button_4 = sibling(first_child(fragment_32));
+                  button_4.__click = async () => {
                     await fetch(`/api/executions/${$$props.executionId}/cancel`, { method: "POST" });
                   };
                   next();
-                  append($$anchor5, fragment_28);
+                  append($$anchor5, fragment_32);
                 };
-                if_block(node_26, ($$render) => {
+                if_block(node_29, ($$render) => {
                   if (get(execution).status === "running")
-                    $$render(consequent_16);
+                    $$render(consequent_18);
                 });
               }
               next();
-              reset(div_29);
+              reset(div_33);
               next();
               template_effect(($0) => {
                 set_text(text_4, get(elapsed));
@@ -10791,7 +10941,7 @@ function ExecutionDetail($$anchor, $$props) {
             };
             if_block(node_4, ($$render) => {
               if (get(execution))
-                $$render(consequent_17);
+                $$render(consequent_19);
             }, true);
           }
           append($$anchor3, fragment_5);
@@ -10800,7 +10950,7 @@ function ExecutionDetail($$anchor, $$props) {
           if (get(error))
             $$render(consequent_2);
           else
-            $$render(alternate_7, false);
+            $$render(alternate_9, false);
         }, true);
       }
       append($$anchor2, fragment_3);
@@ -10809,7 +10959,7 @@ function ExecutionDetail($$anchor, $$props) {
       if (get(loading))
         $$render(consequent_1);
       else
-        $$render(alternate_8, false);
+        $$render(alternate_10, false);
     });
   }
   next();
@@ -11080,5 +11230,5 @@ if (target) {
   mount(App_default, { target });
 }
 
-//# debugId=6C7853AEDA16EE4F64756E2164756E21
+//# debugId=29F4A361273ACFA064756E2164756E21
 //# sourceMappingURL=app.js.map

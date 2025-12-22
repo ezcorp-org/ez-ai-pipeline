@@ -10,6 +10,53 @@ import { join } from "path";
 
 const HISTORY_FILE = join(import.meta.dir, "../outputs/execution-history.json");
 
+// Extract the meaningful final output from pipeline result
+function extractFinalOutput(output: Record<string, unknown>): { type: "text" | "code" | "json"; content: string; label: string } | null {
+  if (!output || typeof output !== "object") return null;
+
+  // Check for prompt optimizer output (stage-6-finalize)
+  const finalizeStage = output["stage-6-finalize"] as Record<string, unknown> | undefined;
+  if (finalizeStage?.optimizedPrompt) {
+    return {
+      type: "text",
+      content: String(finalizeStage.optimizedPrompt),
+      label: "Optimized Prompt",
+    };
+  }
+
+  // Check for common output patterns
+  if (output.optimizedPrompt) {
+    return { type: "text", content: String(output.optimizedPrompt), label: "Optimized Prompt" };
+  }
+  if (output.refinedPrompt) {
+    return { type: "text", content: String(output.refinedPrompt), label: "Refined Prompt" };
+  }
+  if (output.enhancedPrompt) {
+    return { type: "text", content: String(output.enhancedPrompt), label: "Enhanced Prompt" };
+  }
+  if (output.generatedCode) {
+    return { type: "code", content: String(output.generatedCode), label: "Generated Code" };
+  }
+
+  // Check for pipeline generator output
+  const generateStage = output["stage-3-generate"] as Record<string, unknown> | undefined;
+  if (generateStage?.pipelineConfig) {
+    return {
+      type: "code",
+      content: JSON.stringify(generateStage.pipelineConfig, null, 2),
+      label: "Generated Pipeline",
+    };
+  }
+
+  // Fallback: return the full output as JSON (truncated if too large)
+  const jsonStr = JSON.stringify(output, null, 2);
+  return {
+    type: "json",
+    content: jsonStr.length > 50000 ? jsonStr.slice(0, 50000) + "\n...[truncated]" : jsonStr,
+    label: "Output",
+  };
+}
+
 interface ExecutionHistoryRecord {
   id: string;
   pipelineId: string;
@@ -23,8 +70,12 @@ interface ExecutionHistoryRecord {
   stagesSkipped: number;
   stagesFailed: number;
   inputPreview: string;
+  input: string;
   totalCost: number;
   error?: string;
+  finalOutput?: string;
+  finalOutputType?: "text" | "code" | "json";
+  finalOutputLabel?: string;
 }
 
 export interface ExecutionEvent {
@@ -458,6 +509,11 @@ class ExecutionManager {
     try {
       const history = await this.loadHistory();
 
+      // Extract the final output if available
+      const finalOutput = exec.result?.output
+        ? extractFinalOutput(exec.result.output as Record<string, unknown>)
+        : null;
+
       const record: ExecutionHistoryRecord = {
         id: exec.id,
         pipelineId: exec.pipelineId,
@@ -471,8 +527,12 @@ class ExecutionManager {
         stagesSkipped: exec.result?.summary?.stagesSkipped || 0,
         stagesFailed: exec.result?.summary?.stagesFailed || 0,
         inputPreview: exec.inputPreview,
+        input: exec.input,
         totalCost: exec.result?.summary?.totalCost || 0,
         error: exec.result?.error,
+        finalOutput: finalOutput?.content,
+        finalOutputType: finalOutput?.type,
+        finalOutputLabel: finalOutput?.label,
       };
 
       // Add to beginning of array (most recent first)

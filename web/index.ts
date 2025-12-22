@@ -274,6 +274,17 @@ const server = Bun.serve<WebSocketData>({
       // If not found, check history
       const historyRecord = await executionManager.getHistoryRecord(executionId);
       if (historyRecord) {
+        // Build output object if we have final output saved
+        const outputObj = historyRecord.finalOutput
+          ? {
+              _extractedFinalOutput: {
+                type: historyRecord.finalOutputType,
+                content: historyRecord.finalOutput,
+                label: historyRecord.finalOutputLabel,
+              },
+            }
+          : undefined;
+
         // Return history record in a compatible format
         return Response.json({
           id: historyRecord.id,
@@ -283,12 +294,13 @@ const server = Bun.serve<WebSocketData>({
           startTime: historyRecord.startTime,
           currentStage: historyRecord.stagesRun,
           totalStages: historyRecord.totalStages,
-          input: historyRecord.inputPreview,
+          input: historyRecord.input || historyRecord.inputPreview,
           stages: [], // History doesn't store stage details
           isHistorical: true,
           result: {
             status: historyRecord.status,
             error: historyRecord.error,
+            output: outputObj,
             summary: {
               totalDuration: historyRecord.duration,
               totalCost: historyRecord.totalCost,

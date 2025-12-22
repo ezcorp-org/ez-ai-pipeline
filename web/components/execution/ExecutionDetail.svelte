@@ -233,6 +233,60 @@
     return String(output);
   }
 
+  // Extract the meaningful final output based on pipeline type
+  function getFinalOutput(output: unknown): { type: 'text' | 'code' | 'json'; content: string; label: string } | null {
+    if (!output || typeof output !== 'object') return null;
+
+    const out = output as Record<string, unknown>;
+
+    // Check for pre-extracted output (from historical records)
+    if (out._extractedFinalOutput) {
+      const extracted = out._extractedFinalOutput as { type: 'text' | 'code' | 'json'; content: string; label: string };
+      return extracted;
+    }
+
+    // Check for prompt optimizer output
+    const finalizeStage = out['stage-6-finalize'] as Record<string, unknown> | undefined;
+    if (finalizeStage?.optimizedPrompt) {
+      return {
+        type: 'text',
+        content: String(finalizeStage.optimizedPrompt),
+        label: 'Optimized Prompt'
+      };
+    }
+
+    // Check for common output patterns
+    if (out.optimizedPrompt) {
+      return { type: 'text', content: String(out.optimizedPrompt), label: 'Optimized Prompt' };
+    }
+    if (out.refinedPrompt) {
+      return { type: 'text', content: String(out.refinedPrompt), label: 'Refined Prompt' };
+    }
+    if (out.enhancedPrompt) {
+      return { type: 'text', content: String(out.enhancedPrompt), label: 'Enhanced Prompt' };
+    }
+    if (out.generatedCode) {
+      return { type: 'code', content: String(out.generatedCode), label: 'Generated Code' };
+    }
+
+    // Check for pipeline generator output
+    const generateStage = out['stage-3-generate'] as Record<string, unknown> | undefined;
+    if (generateStage?.pipelineConfig) {
+      return {
+        type: 'code',
+        content: JSON.stringify(generateStage.pipelineConfig, null, 2),
+        label: 'Generated Pipeline'
+      };
+    }
+
+    // Fallback: return the full output as JSON
+    return {
+      type: 'json',
+      content: JSON.stringify(output, null, 2),
+      label: 'Output'
+    };
+  }
+
   function formatElapsed(startTime: number): string {
     const elapsed = Date.now() - startTime;
     return formatDuration(elapsed);
@@ -252,6 +306,10 @@
   let totalCost = $derived(
     execution?.result?.summary?.totalCost ||
     execution?.stages.reduce((sum, s) => sum + (s.cost || 0), 0) || 0
+  );
+
+  let finalOutput = $derived(
+    execution?.result?.output ? getFinalOutput(execution.result.output) : null
   );
 
   let elapsed = $state('');
@@ -426,13 +484,47 @@
       {/if}
     </div>
 
-    <!-- Final Result -->
+    <!-- Final Output - Main Result -->
+    {#if finalOutput}
+      <div class="bg-white rounded-xl border border-slate-200 mb-6 overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50">
+          <div class="flex items-center gap-2">
+            <span class="text-green-600 text-lg">✨</span>
+            <h3 class="font-semibold text-slate-800">{finalOutput.label}</h3>
+          </div>
+          <button
+            onclick={() => {
+              navigator.clipboard.writeText(finalOutput!.content);
+            }}
+            class="text-sm px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-1.5"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            Copy
+          </button>
+        </div>
+        <div class="p-4">
+          {#if finalOutput.type === 'text'}
+            <div class="prose prose-slate max-w-none">
+              <pre class="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 bg-slate-50 rounded-lg p-4 max-h-[32rem] overflow-y-auto">{finalOutput.content}</pre>
+            </div>
+          {:else if finalOutput.type === 'code'}
+            <pre class="text-sm bg-slate-800 text-slate-100 rounded-lg p-4 overflow-x-auto max-h-[32rem] overflow-y-auto font-mono">{finalOutput.content}</pre>
+          {:else}
+            <pre class="text-sm text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded-lg p-4 max-h-[32rem] overflow-y-auto font-mono">{finalOutput.content}</pre>
+          {/if}
+        </div>
+      </div>
+    {/if}
+
+    <!-- Result Summary -->
     {#if execution.result}
       <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
-        <h3 class="text-sm font-medium text-slate-700 mb-3">Result</h3>
+        <h3 class="text-sm font-medium text-slate-700 mb-3">Execution Summary</h3>
 
         {#if execution.result.summary}
-          <div class="grid grid-cols-3 gap-4 mb-4">
+          <div class="grid grid-cols-3 gap-4">
             <div class="bg-slate-50 rounded-lg p-3">
               <div class="text-xs text-slate-500">Duration</div>
               <div class="font-medium">{formatDuration(execution.result.summary.totalDuration)}</div>
@@ -449,13 +541,6 @@
                 {execution.result.summary.stagesFailed} failed
               </div>
             </div>
-          </div>
-        {/if}
-
-        {#if execution.result.output}
-          <div>
-            <div class="text-xs font-medium text-slate-500 mb-2">Final Output</div>
-            <pre class="text-sm text-slate-700 whitespace-pre-wrap break-words bg-slate-50 rounded-lg p-3 max-h-96 overflow-y-auto font-mono">{formatOutput(execution.result.output)}</pre>
           </div>
         {/if}
 
