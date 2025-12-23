@@ -7,6 +7,29 @@ const PIPELINES_DIR = join(import.meta.dir, "../pipelines");
 const OUTPUTS_DIR = join(import.meta.dir, "../outputs");
 const DIST_DIR = join(import.meta.dir, "dist");
 
+// Check if dist directory exists and build if needed
+async function ensureDistExists() {
+  const indexFile = Bun.file(join(DIST_DIR, "index.html"));
+  if (!(await indexFile.exists())) {
+    console.log("📦 Web assets not found, building...");
+    const buildScript = join(import.meta.dir, "build.ts");
+    const proc = Bun.spawn(["bun", "run", buildScript], {
+      cwd: join(import.meta.dir, ".."),
+      stdout: "inherit",
+      stderr: "inherit",
+    });
+    const exitCode = await proc.exited;
+    if (exitCode !== 0) {
+      console.error("❌ Failed to build web assets. Please run: bun run build:web");
+      process.exit(1);
+    }
+    console.log("✅ Web assets built successfully!");
+  }
+}
+
+// Ensure dist exists before starting server
+await ensureDistExists();
+
 // Helper to get pipeline list
 async function getPipelines() {
   const files = await readdir(PIPELINES_DIR);
@@ -327,6 +350,11 @@ const server = Bun.serve<WebSocketData>({
         return Response.json({ error: "Output not found" }, { status: 404 });
       }
       return Response.json(output);
+    }
+
+    // Favicon - return empty response to prevent errors
+    if (path === "/favicon.ico") {
+      return new Response(null, { status: 204 });
     }
 
     // Static files
