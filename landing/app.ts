@@ -1,28 +1,117 @@
 // EZ AI Pipeline Landing Page - Interactive Elements
 
-// Copy to clipboard functionality
+// Copy to clipboard functionality with enhanced UX
+const copyIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+const checkIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+const errorIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+
+// Fallback copy method for older browsers or non-secure contexts
+function fallbackCopyText(text: string): boolean {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-9999px';
+  textArea.style.top = '-9999px';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    const success = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return success;
+  } catch {
+    document.body.removeChild(textArea);
+    return false;
+  }
+}
+
+// Initialize copy buttons with icons
 document.querySelectorAll('.copy-btn').forEach((btn) => {
-  btn.addEventListener('click', async () => {
-    const textToCopy = btn.getAttribute('data-copy');
+  const button = btn as HTMLButtonElement;
+  button.innerHTML = `${copyIcon}<span>Copy</span>`;
+
+  button.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const textToCopy = button.getAttribute('data-copy');
     if (!textToCopy) return;
 
-    try {
-      await navigator.clipboard.writeText(textToCopy);
+    // Prevent double-clicks during animation
+    if (button.classList.contains('copied') || button.classList.contains('copy-error')) return;
 
-      // Visual feedback
-      const originalText = btn.textContent;
-      btn.textContent = 'Copied!';
-      btn.classList.add('copied');
+    let success = false;
+
+    try {
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(textToCopy);
+        success = true;
+      } else {
+        // Fallback for non-secure contexts
+        success = fallbackCopyText(textToCopy);
+      }
+    } catch {
+      // If clipboard API fails, try fallback
+      success = fallbackCopyText(textToCopy);
+    }
+
+    if (success) {
+      // Success feedback
+      button.innerHTML = `${checkIcon}<span>Copied!</span>`;
+      button.classList.add('copied');
+
+      // Create and show tooltip
+      showCopyToast(button, 'Copied to clipboard!', 'success');
 
       setTimeout(() => {
-        btn.textContent = originalText;
-        btn.classList.remove('copied');
+        button.innerHTML = `${copyIcon}<span>Copy</span>`;
+        button.classList.remove('copied');
       }, 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
+    } else {
+      // Error feedback
+      button.innerHTML = `${errorIcon}<span>Failed</span>`;
+      button.classList.add('copy-error');
+
+      showCopyToast(button, 'Failed to copy', 'error');
+
+      setTimeout(() => {
+        button.innerHTML = `${copyIcon}<span>Copy</span>`;
+        button.classList.remove('copy-error');
+      }, 2000);
     }
   });
 });
+
+// Toast notification for copy feedback
+function showCopyToast(button: HTMLElement, message: string, type: 'success' | 'error') {
+  // Remove any existing toast
+  const existingToast = document.querySelector('.copy-toast');
+  if (existingToast) existingToast.remove();
+
+  const toast = document.createElement('div');
+  toast.className = `copy-toast copy-toast-${type}`;
+  toast.textContent = message;
+
+  // Position toast near the button
+  const rect = button.getBoundingClientRect();
+  toast.style.position = 'fixed';
+  toast.style.left = `${rect.left + rect.width / 2}px`;
+  toast.style.top = `${rect.top - 40}px`;
+  toast.style.transform = 'translateX(-50%)';
+
+  document.body.appendChild(toast);
+
+  // Trigger animation
+  requestAnimationFrame(() => {
+    toast.classList.add('copy-toast-visible');
+  });
+
+  // Remove toast after animation
+  setTimeout(() => {
+    toast.classList.remove('copy-toast-visible');
+    setTimeout(() => toast.remove(), 200);
+  }, 1500);
+}
 
 // Mobile menu toggle
 const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
@@ -62,7 +151,6 @@ if (window.matchMedia('(min-width: 768px)').matches) {
 
   if (terminal) {
     window.addEventListener('scroll', () => {
-      const scrollY = window.scrollY;
       const terminalRect = terminal.getBoundingClientRect();
 
       if (terminalRect.top < window.innerHeight && terminalRect.bottom > 0) {
