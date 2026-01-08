@@ -285,7 +285,8 @@ const server = Bun.serve<WebSocketData>({
     }
 
     // GET /api/executions/:id - Get full execution details with stages
-    if (path.match(/^\/api\/executions\/[^/]+$/)) {
+    // NOTE: This must come AFTER specific routes like /running and /history
+    if (path.match(/^\/api\/executions\/[^/]+$/) && !["running", "history"].includes(path.split("/")[3])) {
       const executionId = path.split("/")[3];
 
       // First check in-memory (active/recent) executions

@@ -1,9 +1,98 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
+import { execSync } from "node:child_process";
 import type { ModelConfig } from "@typings/stage.ts";
 import { ModelError, TimeoutError, isRetryableError } from "@utils/errors.ts";
 import { calculateCost } from "@utils/cost.ts";
 import type { CostBreakdown } from "@typings/result.ts";
 import { RETRY_DELAYS } from "@config/constants.ts";
+
+// Cache for resolved Claude Code path
+let resolvedClaudeCodePath: string | null = null;
+
+/**
+ * Resolve the absolute path to the Claude Code executable.
+ * The SDK requires an absolute path because it does fs.existsSync() before spawning.
+ * Works with both Node.js and Bun runtimes.
+ */
+function resolveClaudeCodePath(customPath?: string): string {
+  // If custom path is provided and is absolute, use it directly
+  if (customPath && customPath.startsWith("/")) {
+    return customPath;
+  }
+
+  // Check environment variable for explicit path
+  const envPath = process.env.CLAUDE_CODE_PATH;
+  if (envPath && envPath.startsWith("/")) {
+    return envPath;
+  }
+
+  // Return cached path if already resolved
+  if (resolvedClaudeCodePath) {
+    return resolvedClaudeCodePath;
+  }
+
+  // Try to find claude in PATH
+  const commandToFind = customPath || envPath || "claude";
+
+  // Try Bun.which first if available (Bun runtime)
+  try {
+    if (typeof Bun !== "undefined" && Bun.which) {
+      const path = Bun.which(commandToFind);
+      if (path) {
+        resolvedClaudeCodePath = path;
+        return path;
+      }
+    }
+  } catch {
+    // Bun.which not available
+  }
+
+  // Use Node.js child_process.execSync with 'which' (works on macOS/Linux)
+  // or 'where' on Windows
+  try {
+    const isWindows = process.platform === "win32";
+    const whichCmd = isWindows ? "where" : "which";
+    const result = execSync(`${whichCmd} ${commandToFind}`, {
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    const path = result.trim().split("\n")[0]; // Take first result on Windows
+    if (path && (path.startsWith("/") || (isWindows && path.includes("\\")))) {
+      resolvedClaudeCodePath = path;
+      return path;
+    }
+  } catch {
+    // which/where command failed
+  }
+
+  // If all else fails, throw a helpful error
+  throw new Error(
+    `Could not find Claude Code executable. Please either:\n` +
+    `1. Install Claude Code globally: npm install -g @anthropic-ai/claude-code\n` +
+    `2. Set CLAUDE_CODE_PATH environment variable to the absolute path of the claude executable\n` +
+    `3. Pass pathToClaudeCodeExecutable option with the absolute path`
+  );
+}
+
+/**
+ * Check if Claude Code is available and return its path.
+ * Useful for verifying the installation before running pipelines.
+ */
+export function getClaudeCodePath(): string | null {
+  try {
+    return resolveClaudeCodePath();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Clear the cached Claude Code path. Useful if the user installs Claude Code
+ * after the first resolution attempt.
+ */
+export function clearClaudeCodePathCache(): void {
+  resolvedClaudeCodePath = null;
+}
 
 export interface PromptResult {
   text: string;
@@ -17,6 +106,8 @@ export interface PromptResult {
 export interface SessionOptions {
   maxRetries?: number;
   timeoutMs?: number;
+  /** Path to Claude Code executable. Defaults to 'claude' (uses PATH resolution) */
+  pathToClaudeCodeExecutable?: string;
 }
 
 export class SessionManager {
@@ -85,6 +176,10 @@ export class SessionManager {
     let inputTokens = 0;
     let outputTokens = 0;
 
+    // Resolve Claude Code executable path to an absolute path
+    // The SDK requires an absolute path because it does fs.existsSync() before spawning
+    const claudeCodePath = resolveClaudeCodePath(this.options.pathToClaudeCodeExecutable);
+
     // Use Claude Agent SDK query function
     for await (const message of query({
       prompt: fullPrompt,
@@ -92,6 +187,7 @@ export class SessionManager {
         model: model.modelID,
         maxTurns: 1,
         allowedTools: [], // No tools needed for prompt optimization
+        pathToClaudeCodeExecutable: claudeCodePath,
         ...(this.sessionId && { resume: this.sessionId }),
       },
     })) {

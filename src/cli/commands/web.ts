@@ -183,6 +183,45 @@ export async function webCommand(args: ArgumentsCamelCase<WebOptions>): Promise<
           return Response.json(output);
         }
 
+        // Execution routes (stub - execution management requires dev server)
+        if (pathname === "/api/executions") {
+          return Response.json({ executions: [] });
+        }
+
+        if (pathname === "/api/executions/running") {
+          return Response.json({ executions: [], count: 0 });
+        }
+
+        if (pathname === "/api/executions/history") {
+          // Try to load execution history from file
+          const historyFile = path.join(outputsDir, "execution-history.json");
+          try {
+            const historyData = await readJsonFile(historyFile) as unknown[];
+            const pageParam = url.searchParams.get("page");
+            const pageSizeParam = url.searchParams.get("pageSize");
+            const page = parseInt(pageParam || "1");
+            const pageSize = parseInt(pageSizeParam || "20");
+            const total = historyData.length;
+            const totalPages = Math.ceil(total / pageSize);
+            const start = (page - 1) * pageSize;
+            const executions = historyData.slice(start, start + pageSize);
+            return Response.json({ executions, total, page, pageSize, totalPages });
+          } catch {
+            return Response.json({ executions: [], total: 0, page: 1, pageSize: 20, totalPages: 0 });
+          }
+        }
+
+        if (pathname === "/api/config/status") {
+          return Response.json({
+            hasApiKey: !!process.env.ANTHROPIC_API_KEY,
+            cliTools: {
+              claude: { available: false, error: "CLI check not available in static mode" },
+              opencode: { available: false, error: "CLI check not available in static mode" },
+              aider: { available: false, error: "CLI check not available in static mode" },
+            },
+          });
+        }
+
         // Static files
         let filePath = pathname === "/" ? "/index.html" : pathname;
         const fullPath = path.join(webDistDir, filePath);
@@ -246,6 +285,53 @@ export async function webCommand(args: ArgumentsCamelCase<WebOptions>): Promise<
           const output = await getOutput(filename);
           res.writeHead(output ? 200 : 404, { "Content-Type": "application/json" });
           res.end(JSON.stringify(output || { error: "Output not found" }));
+          return;
+        }
+
+        // Execution routes (stub - execution management requires dev server)
+        if (pathname === "/api/executions") {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ executions: [] }));
+          return;
+        }
+
+        if (pathname === "/api/executions/running") {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ executions: [], count: 0 }));
+          return;
+        }
+
+        if (pathname === "/api/executions/history") {
+          const historyFile = path.join(outputsDir, "execution-history.json");
+          try {
+            const historyData = await readJsonFile(historyFile) as unknown[];
+            const pageParam = url.searchParams.get("page");
+            const pageSizeParam = url.searchParams.get("pageSize");
+            const page = parseInt(pageParam || "1");
+            const pageSize = parseInt(pageSizeParam || "20");
+            const total = historyData.length;
+            const totalPages = Math.ceil(total / pageSize);
+            const start = (page - 1) * pageSize;
+            const executions = historyData.slice(start, start + pageSize);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ executions, total, page, pageSize, totalPages }));
+          } catch {
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ executions: [], total: 0, page: 1, pageSize: 20, totalPages: 0 }));
+          }
+          return;
+        }
+
+        if (pathname === "/api/config/status") {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            hasApiKey: !!process.env.ANTHROPIC_API_KEY,
+            cliTools: {
+              claude: { available: false, error: "CLI check not available in static mode" },
+              opencode: { available: false, error: "CLI check not available in static mode" },
+              aider: { available: false, error: "CLI check not available in static mode" },
+            },
+          }));
           return;
         }
 
