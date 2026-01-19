@@ -1,4 +1,6 @@
 <script lang="ts">
+  import CopyButton from '../CopyButton.svelte';
+
   let { filename, navigate }: { filename: string; navigate: (path: string) => void } = $props();
 
   interface Stage {
@@ -38,7 +40,6 @@
   let error = $state<string | null>(null);
   let expandedStages = $state<Set<string>>(new Set());
   let showRaw = $state<Record<string, boolean>>({});
-  let copied = $state(false);
 
   $effect(() => {
     loading = true;
@@ -137,13 +138,6 @@
       return JSON.stringify(out["stage-3-generate"].pipelineConfig, null, 2);
     }
     return JSON.stringify(out, null, 2);
-  }
-
-  async function copyToClipboard() {
-    const text = getFinalOutput();
-    await navigator.clipboard.writeText(text);
-    copied = true;
-    setTimeout(() => (copied = false), 2000);
   }
 </script>
 
@@ -303,12 +297,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-slate-200">
       <div class="p-4 border-b border-slate-200 flex items-center justify-between">
         <h2 class="font-semibold text-slate-700">Final Output</h2>
-        <button
-          onclick={copyToClipboard}
-          class="text-sm px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer"
-        >
-          {copied ? "Copied!" : "Copy"}
-        </button>
+        <CopyButton text={getFinalOutput()} class="text-sm bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100" />
       </div>
       <div class="p-4">
         <pre class="text-sm whitespace-pre-wrap bg-slate-800 text-slate-100 p-4 rounded-lg overflow-x-auto max-h-[32rem]">{getFinalOutput()}</pre>

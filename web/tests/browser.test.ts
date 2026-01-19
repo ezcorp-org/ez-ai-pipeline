@@ -148,6 +148,60 @@ export const browserTestScenarios = {
       { action: "waitFor", url: "/pipelines" },
     ],
   },
+
+  /**
+   * Test 11: Copy button shows visual feedback
+   */
+  copyButtonFeedback: {
+    description: "Copy button shows visual feedback when clicked",
+    steps: [
+      { action: "navigate", url: `${BASE_URL}/outputs` },
+      { action: "waitFor", text: "Pipeline Outputs" },
+      // Click first output to view details
+      { action: "click", selector: ".cursor-pointer" },
+      { action: "waitFor", text: "Final Output" },
+      // Click copy button
+      { action: "click", selector: ".copy-button, button:contains('Copy')" },
+      // Verify feedback
+      { action: "waitFor", text: "Copied!" },
+      // Verify toast notification appears
+      { action: "verify", selector: ".copy-toast", exists: true },
+    ],
+  },
+
+  /**
+   * Test 12: Copy button on execution detail page
+   */
+  copyButtonExecutionDetail: {
+    description: "Copy button works on execution detail page",
+    steps: [
+      { action: "navigate", url: `${BASE_URL}/running` },
+      { action: "waitFor", text: "Running" },
+      // Click a completed execution to view
+      { action: "click", selector: ".cursor-pointer" },
+      { action: "waitFor", url: "/executions/" },
+      // If there's a final output section, test copy
+      { action: "verify", text: "Copy", exists: true },
+    ],
+  },
+
+  /**
+   * Test 13: Copy button resets state after delay
+   */
+  copyButtonReset: {
+    description: "Copy button resets to initial state after 2 seconds",
+    steps: [
+      { action: "navigate", url: `${BASE_URL}/outputs` },
+      { action: "waitFor", text: "Pipeline Outputs" },
+      { action: "click", selector: ".cursor-pointer" },
+      { action: "waitFor", text: "Final Output" },
+      { action: "click", selector: ".copy-button, button:contains('Copy')" },
+      { action: "waitFor", text: "Copied!" },
+      // Wait for reset (2.5 seconds should be enough)
+      { action: "wait", ms: 2500 },
+      { action: "verify", text: "Copy", exists: true },
+    ],
+  },
 };
 
 // Simple validation tests that can run without browser

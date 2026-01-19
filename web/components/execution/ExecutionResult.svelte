@@ -1,4 +1,6 @@
 <script lang="ts">
+  import CopyButton from '../CopyButton.svelte';
+
   interface ExecutionResultData {
     status: string;
     pipelineId: string;
@@ -34,12 +36,6 @@
     }
     return String(output);
   }
-
-  function copyToClipboard() {
-    if (result.output) {
-      navigator.clipboard.writeText(formatOutput(result.output));
-    }
-  }
 </script>
 
 {#if result.output}
@@ -47,12 +43,10 @@
     <div class="flex items-center justify-between mb-4">
       <h2 class="font-semibold text-slate-700">Output</h2>
       <div class="flex gap-2">
-        <button
-          onclick={copyToClipboard}
-          class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-        >
-          Copy
-        </button>
+        <CopyButton
+          text={formatOutput(result.output)}
+          class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600"
+        />
         <button
           onclick={() => showFullOutput = !showFullOutput}
           class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
